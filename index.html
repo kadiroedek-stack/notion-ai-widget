@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI To-Do Assistent</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f7f6f3;
+      --surface: #ffffff;
+      --surface2: #f0eeea;
+      --border: #e5e2db;
+      --border2: #d4d0c8;
+      --text: #1a1916;
+      --text2: #6b6860;
+      --text3: #9e9b93;
+      --accent: #e8552a;
+      --accent-soft: #fdf0ec;
+      --accent-border: #f4c4b5;
+      --green: #2d7a4f;
+      --green-soft: #edf7f2;
+      --radius: 10px;
+      --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.04);
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ---------- HEADER ---------- */
+    .header {
+      padding: 14px 20px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .header-icon {
+      width: 28px; height: 28px;
+      background: var(--accent);
+      border-radius: 7px;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+    .header-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+      letter-spacing: -0.2px;
+    }
+    .header-sub {
+      font-size: 11px;
+      color: var(--text3);
+      font-family: 'DM Mono', monospace;
+      margin-left: auto;
+    }
+
+    /* ---------- API KEY SCREEN ---------- */
+    #apiscreen {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 20px;
+    }
+    .apicard {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 28px 24px;
+      max-width: 400px;
+      width: 100%;
+      box-shadow: var(--shadow);
+    }
+    .apicard h2 {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    .apicard p {
+      font-size: 13px;
+      color: var(--text2);
+      line-height: 1.5;
+      margin-bottom: 18px;
+    }
+    .apicard a { color: var(--accent); text-decoration: none; }
+    .api-input-row {
+      display: flex;
+      gap: 8px;
+    }
+    .api-input {
+      flex: 1;
+      padding: 9px 12px;
+      border: 1px solid var(--border2);
+      border-radius: 8px;
+      font-size: 13px;
+      font-family: 'DM Mono', monospace;
+      background: var(--surface2);
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .api-input:focus { border-color: var(--accent); }
+    .btn-primary {
+      padding: 9px 16px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      transition: opacity 0.15s;
+      white-space: nowrap;
+    }
+    .btn-primary:hover { opacity: 0.88; }
+    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+    .api-hint {
+      font-size: 11px;
+      color: var(--text3);
+      margin-top: 10px;
+      line-height: 1.5;
+    }
+
+    /* ---------- MAIN APP ---------- */
+    #app {
+      flex: 1;
+      display: none;
+      flex-direction: column;
+      padding: 16px;
+      gap: 12px;
+    }
+    #app.visible { display: flex; }
+
+    /* Quick actions */
+    .section-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text3);
+      margin-bottom: 6px;
+    }
+    .quick-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .chip {
+      padding: 5px 11px;
+      border: 1px solid var(--border2);
+      border-radius: 20px;
+      font-size: 12px;
+      color: var(--text2);
+      cursor: pointer;
+      background: var(--surface);
+      transition: all 0.12s;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .chip:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    /* Input box */
+    .input-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      transition: border-color 0.15s;
+    }
+    .input-box:focus-within { border-color: var(--border2); }
+
+    textarea#prompt {
+      width: 100%;
+      min-height: 80px;
+      padding: 13px 14px;
+      border: none;
+      outline: none;
+      resize: none;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      line-height: 1.55;
+      color: var(--text);
+      background: transparent;
+    }
+    textarea#prompt::placeholder { color: var(--text3); }
+
+    .input-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      border-top: 1px solid var(--border);
+      gap: 8px;
+    }
+    .input-footer-left {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .mode-toggle {
+      display: flex;
+      background: var(--surface2);
+      border-radius: 6px;
+      padding: 2px;
+      gap: 2px;
+    }
+    .mode-btn {
+      padding: 4px 10px;
+      border-radius: 4px;
+      border: none;
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+      background: transparent;
+      color: var(--text3);
+      font-family: 'DM Sans', sans-serif;
+      transition: all 0.12s;
+    }
+    .mode-btn.active {
+      background: var(--surface);
+      color: var(--text);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .char-count {
+      font-size: 11px;
+      color: var(--text3);
+      font-family: 'DM Mono', monospace;
+      margin-left: auto;
+    }
+    .send-btn {
+      padding: 7px 14px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 7px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      transition: opacity 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      flex-shrink: 0;
+    }
+    .send-btn:hover { opacity: 0.88; }
+    .send-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    /* Status */
+    .status-bar {
+      display: none;
+      padding: 9px 13px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      align-items: center;
+      gap: 7px;
+    }
+    .status-bar.show { display: flex; }
+    .status-bar.loading { background: #f0f0ff; color: #5b50d6; border: 1px solid #d4d0f5; }
+    .status-bar.success { background: var(--green-soft); color: var(--green); border: 1px solid #b8e6ce; }
+    .status-bar.error { background: var(--accent-soft); color: var(--accent); border: 1px solid var(--accent-border); }
+
+    .spinner {
+      width: 13px; height: 13px;
+      border: 2px solid currentColor;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Output */
+    .output-card {
+      display: none;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+    .output-card.show { display: block; }
+
+    .output-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface2);
+    }
+    .output-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text2);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .output-actions {
+      display: flex;
+      gap: 6px;
+    }
+    .btn-ghost {
+      padding: 4px 10px;
+      border: 1px solid var(--border2);
+      border-radius: 6px;
+      background: var(--surface);
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text2);
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      transition: all 0.12s;
+    }
+    .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-save {
+      padding: 4px 10px;
+      border: none;
+      border-radius: 6px;
+      background: var(--accent);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      transition: opacity 0.12s;
+    }
+    .btn-save:hover { opacity: 0.85; }
+    .btn-save:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    .output-title-row {
+      padding: 8px 14px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    #output-title {
+      width: 100%;
+      border: none;
+      outline: none;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text2);
+      background: transparent;
+      padding-bottom: 8px;
+    }
+    #output-title::placeholder { color: var(--text3); }
+
+    #output-text {
+      padding: 14px;
+      font-size: 13.5px;
+      line-height: 1.7;
+      color: var(--text);
+      white-space: pre-wrap;
+      max-height: 280px;
+      overflow-y: auto;
+    }
+
+    /* Todo list preview */
+    .todo-list {
+      padding: 10px 14px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .todo-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 13.5px;
+      line-height: 1.4;
+      color: var(--text);
+      padding: 7px 10px;
+      border-radius: 7px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+    }
+    .todo-check {
+      width: 16px; height: 16px;
+      border: 2px solid var(--border2);
+      border-radius: 4px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    /* Saved indicator */
+    .saved-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 10px;
+      background: var(--green-soft);
+      border: 1px solid #b8e6ce;
+      border-radius: 20px;
+      font-size: 11px;
+      color: var(--green);
+      font-weight: 600;
+    }
+
+    /* Settings link */
+    .settings-row {
+      display: flex;
+      justify-content: flex-end;
+    }
+    .settings-link {
+      font-size: 11px;
+      color: var(--text3);
+      cursor: pointer;
+      text-decoration: underline;
+      font-family: 'DM Mono', monospace;
+    }
+    .settings-link:hover { color: var(--text2); }
+
+    ::-webkit-scrollbar { width: 3px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-icon">✦</div>
+  <div class="header-title">AI To-Do Assistent</div>
+  <div class="header-sub">claude-sonnet</div>
+</div>
+
+<!-- API KEY SETUP -->
+<div id="apiscreen">
+  <div class="apicard">
+    <h2>API Key einrichten</h2>
+    <p>
+      Einmalig deinen <a href="https://console.anthropic.com/settings/keys" target="_blank">Anthropic API Key</a> eingeben. Er wird nur lokal in deinem Browser gespeichert — nicht auf einem Server.
+    </p>
+    <div class="api-input-row">
+      <input type="password" class="api-input" id="api-key-input" placeholder="sk-ant-..." />
+      <button class="btn-primary" onclick="saveApiKey()">Speichern</button>
+    </div>
+    <div class="api-hint">
+      🔒 Wird nur in <code>localStorage</code> deines Browsers gespeichert.<br>
+      Kostenlos starten: <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app">
+
+  <!-- Quick chips -->
+  <div>
+    <div class="section-label">Schnellaktionen</div>
+    <div class="quick-chips">
+      <span class="chip" onclick="setChip('Erstell mir eine To-Do Liste für heute: produktiv arbeiten, Sport, Lernen')">📋 Tages-To-Dos</span>
+      <span class="chip" onclick="setChip('Füge diese Aufgaben hinzu: ')">➕ Aufgaben hinzufügen</span>
+      <span class="chip" onclick="setChip('Priorisiere meine heutigen Aufgaben und sortiere sie nach Wichtigkeit')">🎯 Priorisieren</span>
+      <span class="chip" onclick="setChip('Schreib einen kurzen Tagesplan für heute mit Zeitblöcken')">🕐 Tagesplan</span>
+      <span class="chip" onclick="setChip('Mach aus diesen Notizen eine saubere To-Do Liste: ')">🗒️ Notizen → To-Dos</span>
+    </div>
+  </div>
+
+  <!-- Mode + Input -->
+  <div>
+    <div class="input-box">
+      <textarea id="prompt" placeholder="Was soll die AI für dich tun? z.B. „Füg Sport, Einkaufen und Lernen als To-Dos hinzu"" rows="3"></textarea>
+      <div class="input-footer">
+        <div class="mode-toggle">
+          <button class="mode-btn active" id="mode-generate" onclick="setMode('generate')">✍️ Generieren</button>
+          <button class="mode-btn" id="mode-save" onclick="setMode('save')">💾 Speichern</button>
+        </div>
+        <span class="char-count" id="charcount">0</span>
+        <button class="send-btn" id="send-btn" onclick="handleSend()">
+          <span id="send-label">Senden</span>
+          <span>↵</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Status -->
+  <div class="status-bar" id="status-bar">
+    <div class="spinner" id="status-spinner" style="display:none"></div>
+    <span id="status-msg"></span>
+  </div>
+
+  <!-- Output -->
+  <div class="output-card" id="output-card">
+    <div class="output-header">
+      <span class="output-label" id="output-mode-label">Ergebnis</span>
+      <div class="output-actions">
+        <span id="saved-indicator" style="display:none" class="saved-pill">✓ In Notion gespeichert</span>
+        <button class="btn-ghost" onclick="copyOutput()">Kopieren</button>
+        <button class="btn-save" id="save-btn" onclick="saveToNotion()">💾 In Notion</button>
+      </div>
+    </div>
+    <div class="output-title-row">
+      <input type="text" id="output-title" placeholder="Seitentitel (optional)" />
+    </div>
+    <div id="output-text"></div>
+  </div>
+
+  <div class="settings-row">
+    <span class="settings-link" onclick="resetKey()">API Key ändern</span>
+  </div>
+</div>
+
+<script>
+  const NOTION_PAGE_ID = "97529838-adfc-46e7-87d2-0037aa02cca9";
+  let currentMode = "generate";
+  let lastOutput = "";
+
+  // ---------- INIT ----------
+  window.onload = () => {
+    const key = localStorage.getItem("anthropic_key");
+    if (key) showApp();
+    document.getElementById("prompt").addEventListener("input", e => {
+      document.getElementById("charcount").textContent = e.target.value.length;
+    });
+    document.getElementById("prompt").addEventListener("keydown", e => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") handleSend();
+    });
+  };
+
+  function saveApiKey() {
+    const key = document.getElementById("api-key-input").value.trim();
+    if (!key.startsWith("sk-")) { alert("Bitte einen gültigen API Key eingeben (beginnt mit sk-)"); return; }
+    localStorage.setItem("anthropic_key", key);
+    showApp();
+  }
+
+  function showApp() {
+    document.getElementById("apiscreen").style.display = "none";
+    document.getElementById("app").classList.add("visible");
+  }
+
+  function resetKey() {
+    localStorage.removeItem("anthropic_key");
+    location.reload();
+  }
+
+  function setMode(m) {
+    currentMode = m;
+    document.getElementById("mode-generate").classList.toggle("active", m === "generate");
+    document.getElementById("mode-save").classList.toggle("active", m === "save");
+  }
+
+  function setChip(text) {
+    const ta = document.getElementById("prompt");
+    ta.value = text;
+    ta.focus();
+    document.getElementById("charcount").textContent = text.length;
+    // put cursor at end
+    ta.selectionStart = ta.selectionEnd = text.length;
+  }
+
+  // ---------- MAIN SEND ----------
+  async function handleSend() {
+    const prompt = document.getElementById("prompt").value.trim();
+    if (!prompt) return;
+    const key = localStorage.getItem("anthropic_key");
+    if (!key) { showStatus("error", "Kein API Key gespeichert."); return; }
+
+    if (currentMode === "save") {
+      await generateAndSave(prompt, key);
+    } else {
+      await generateOnly(prompt, key);
+    }
+  }
+
+  async function generateOnly(prompt, key) {
+    setSending(true);
+    showStatus("loading", "Claude denkt nach...");
+    try {
+      const text = await callClaude(prompt, key,
+        "Du bist ein hilfreicher Assistent für Tagesplanung und Produktivität. Du antwortest auf Deutsch, präzise und strukturiert. Wenn du To-Do Listen erstellst, formatiere jede Aufgabe mit einem Bindestrich am Anfang der Zeile.");
+      lastOutput = text;
+      showOutput(text);
+      showStatus("success", "Fertig ✓");
+    } catch(e) {
+      showStatus("error", "Fehler: " + e.message);
+    }
+    setSending(false);
+  }
+
+  async function generateAndSave(prompt, key) {
+    setSending(true);
+    showStatus("loading", "Generiere und speichere in Notion...");
+    try {
+      const text = await callClaude(prompt, key,
+        "Du bist ein hilfreicher Assistent für Tagesplanung. Antworte auf Deutsch, klar und strukturiert. Formatiere To-Do Listen mit Bindestrichen.");
+      lastOutput = text;
+      showOutput(text);
+      showStatus("loading", "Speichere in Notion...");
+      await savePageToNotion(text, key);
+      showStatus("success", "✓ Generiert und in Notion gespeichert!");
+      document.getElementById("saved-indicator").style.display = "inline-flex";
+    } catch(e) {
+      showStatus("error", "Fehler: " + e.message);
+    }
+    setSending(false);
+  }
+
+  async function saveToNotion() {
+    if (!lastOutput) return;
+    const key = localStorage.getItem("anthropic_key");
+    document.getElementById("save-btn").disabled = true;
+    showStatus("loading", "Speichere in Notion...");
+    try {
+      await savePageToNotion(lastOutput, key);
+      showStatus("success", "✓ In Notion gespeichert!");
+      document.getElementById("saved-indicator").style.display = "inline-flex";
+    } catch(e) {
+      showStatus("error", "Fehler: " + e.message);
+    }
+    document.getElementById("save-btn").disabled = false;
+  }
+
+  // ---------- API CALLS ----------
+  async function callClaude(userPrompt, key, systemPrompt) {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": key,
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-access": "true"
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1000,
+        system: systemPrompt,
+        messages: [{ role: "user", content: userPrompt }]
+      })
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err?.error?.message || `HTTP ${res.status}`);
+    }
+    const data = await res.json();
+    return data.content.filter(b => b.type === "text").map(b => b.text).join("\n").trim();
+  }
+
+  async function savePageToNotion(content, key) {
+    const title = document.getElementById("output-title").value.trim()
+      || "AI To-Do — " + new Date().toLocaleDateString("de-AT");
+
+    // Use Claude with Notion MCP to save the page
+    const savePrompt = `Erstelle eine neue Notion-Seite unter der Parent-Seite mit ID "${NOTION_PAGE_ID}".
+Titel: "${title}"
+Inhalt (als Markdown formatiert):
+${content}
+
+Nutze das notion-create-pages Tool. Bestätige kurz wenn erfolgreich.`;
+
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": key,
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-access": "true",
+        "anthropic-beta": "mcp-client-2025-04-04"
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1000,
+        system: "Du bist ein Notion-Assistent. Nutze immer das notion-create-pages Tool um Seiten zu erstellen.",
+        messages: [{ role: "user", content: savePrompt }],
+        mcp_servers: [{
+          type: "url",
+          url: "https://mcp.notion.com/mcp",
+          name: "notion"
+        }]
+      })
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err?.error?.message || `HTTP ${res.status}`);
+    }
+    return res.json();
+  }
+
+  // ---------- UI HELPERS ----------
+  function showOutput(text) {
+    const card = document.getElementById("output-card");
+    const el = document.getElementById("output-text");
+    card.classList.add("show");
+    document.getElementById("saved-indicator").style.display = "none";
+    document.getElementById("save-btn").disabled = false;
+
+    // Render as todo items if lines start with - or •
+    const lines = text.split("\n").filter(l => l.trim());
+    const hasTodos = lines.some(l => /^[-•*]\s/.test(l.trim()));
+
+    if (hasTodos) {
+      document.getElementById("output-mode-label").textContent = "To-Do Liste";
+      el.className = "todo-list";
+      el.innerHTML = lines.map(line => {
+        const clean = line.trim().replace(/^[-•*]\s/, "");
+        return clean ? `<div class="todo-item"><div class="todo-check"></div><span>${escHtml(clean)}</span></div>` : "";
+      }).join("");
+    } else {
+      document.getElementById("output-mode-label").textContent = "Ergebnis";
+      el.className = "";
+      el.id = "output-text";
+      el.style.padding = "14px";
+      el.style.fontSize = "13.5px";
+      el.style.lineHeight = "1.7";
+      el.style.whiteSpace = "pre-wrap";
+      el.style.maxHeight = "280px";
+      el.style.overflowY = "auto";
+      el.textContent = text;
+    }
+
+    // Auto title
+    const ta = document.getElementById("prompt");
+    if (!document.getElementById("output-title").value) {
+      document.getElementById("output-title").value =
+        "AI To-Do — " + new Date().toLocaleDateString("de-AT");
+    }
+  }
+
+  function showStatus(type, msg) {
+    const bar = document.getElementById("status-bar");
+    const spinner = document.getElementById("status-spinner");
+    bar.className = "status-bar show " + type;
+    document.getElementById("status-msg").textContent = msg;
+    spinner.style.display = type === "loading" ? "block" : "none";
+  }
+
+  function setSending(on) {
+    document.getElementById("send-btn").disabled = on;
+    document.getElementById("send-label").textContent = on ? "..." : "Senden";
+  }
+
+  function copyOutput() {
+    navigator.clipboard.writeText(lastOutput).then(() => {
+      showStatus("success", "In Zwischenablage kopiert ✓");
+      setTimeout(() => showStatus("success", ""), 2000);
+    });
+  }
+
+  function escHtml(s) {
+    return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  }
+</script>
+</body>
+</html>
