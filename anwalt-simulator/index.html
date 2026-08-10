@@ -1,0 +1,1269 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Anwaltssimulator Österreich</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9A%96%EF%B8%8F%3C/text%3E%3C/svg%3E" />
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --bg:#0b0d12;
+  --bg2:#12151c;
+  --bg3:#191d27;
+  --bg4:#20252f;
+  --border:#262b37;
+  --border2:#323947;
+  --text:#e9eaee;
+  --text2:#9aa0ae;
+  --text3:#636b7a;
+  --gold:#d4af37;
+  --gold-soft:rgba(212,175,55,0.13);
+  --gold-border:rgba(212,175,55,0.35);
+  --green:#3ecf8e;
+  --green-soft:rgba(62,207,142,0.12);
+  --red:#ef5b5b;
+  --red-soft:rgba(239,91,91,0.12);
+  --blue:#5b9cf6;
+  --blue-soft:rgba(91,156,246,0.12);
+  --radius:14px;
+  --radius-sm:9px;
+  --shadow:0 4px 24px rgba(0,0,0,0.35);
+}
+html[data-theme="light"]{
+  --bg:#f5f4f0;
+  --bg2:#ffffff;
+  --bg3:#f0eee8;
+  --bg4:#e9e6de;
+  --border:#e0ddd3;
+  --border2:#cfcabb;
+  --text:#1c1b18;
+  --text2:#6b6860;
+  --text3:#95928a;
+  --gold:#a8791f;
+  --gold-soft:rgba(168,121,31,0.10);
+  --gold-border:rgba(168,121,31,0.35);
+  --green:#1f8f5f;
+  --green-soft:rgba(31,143,95,0.10);
+  --red:#c93d3d;
+  --red-soft:rgba(201,61,61,0.10);
+  --blue:#2e6bd6;
+  --blue-soft:rgba(46,107,214,0.10);
+  --shadow:0 4px 20px rgba(0,0,0,0.08);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{
+  font-family:'Manrope',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,.serif{font-family:'Playfair Display',serif;}
+::-webkit-scrollbar{width:8px;height:8px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px;}
+button{font-family:inherit;}
+input,select,textarea{font-family:inherit;}
+
+/* ===== START SCREEN ===== */
+#start-screen{
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:24px;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(212,175,55,0.07), transparent 45%),
+    radial-gradient(circle at 80% 80%, rgba(91,156,246,0.06), transparent 45%),
+    var(--bg);
+}
+.start-card{
+  max-width:460px;
+  width:100%;
+  background:var(--bg2);
+  border:1px solid var(--border);
+  border-radius:20px;
+  padding:36px 32px;
+  box-shadow:var(--shadow);
+}
+.start-emblem{
+  width:56px;height:56px;
+  border-radius:14px;
+  background:var(--gold-soft);
+  border:1px solid var(--gold-border);
+  display:flex;align-items:center;justify-content:center;
+  font-size:26px;
+  margin-bottom:18px;
+}
+.start-card h1{font-size:26px;font-weight:700;margin-bottom:6px;letter-spacing:-0.3px;}
+.start-card .sub{color:var(--text2);font-size:13.5px;line-height:1.6;margin-bottom:24px;}
+.field{margin-bottom:16px;}
+.field label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3);margin-bottom:7px;}
+.field input, .field select{
+  width:100%;
+  padding:11px 13px;
+  background:var(--bg3);
+  border:1px solid var(--border2);
+  border-radius:var(--radius-sm);
+  color:var(--text);
+  font-size:14px;
+  outline:none;
+  transition:border-color .15s;
+}
+.field input:focus, .field select:focus{border-color:var(--gold);}
+.start-bereiche{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px;}
+.start-bereiche span{
+  font-size:11.5px;padding:5px 10px;border-radius:20px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);
+}
+.btn{
+  cursor:pointer;border:none;border-radius:var(--radius-sm);
+  font-weight:700;font-size:14px;padding:12px 18px;
+  transition:all .15s;
+  font-family:'Manrope',sans-serif;
+}
+.btn-gold{background:linear-gradient(180deg,#e3c458,var(--gold));color:#1a1508;}
+.btn-gold:hover{filter:brightness(1.07);transform:translateY(-1px);}
+.btn-gold:disabled{opacity:.4;cursor:not-allowed;transform:none;}
+.btn-block{width:100%;}
+.start-hint{font-size:11.5px;color:var(--text3);margin-top:14px;text-align:center;line-height:1.6;}
+
+/* ===== APP LAYOUT ===== */
+#app{display:none;min-height:100vh;grid-template-columns:236px 1fr;}
+#app.visible{display:grid;}
+
+/* SIDEBAR */
+.sidebar{
+  background:var(--bg2);
+  border-right:1px solid var(--border);
+  padding:20px 14px;
+  display:flex;flex-direction:column;
+  position:sticky;top:0;height:100vh;
+}
+.brand{display:flex;align-items:center;gap:10px;padding:0 8px 20px;border-bottom:1px solid var(--border);margin-bottom:16px;}
+.brand-emblem{width:34px;height:34px;border-radius:9px;background:var(--gold-soft);border:1px solid var(--gold-border);display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+.brand-name{font-family:'Playfair Display',serif;font-weight:700;font-size:14.5px;line-height:1.25;}
+.brand-name small{display:block;font-family:'Manrope',sans-serif;font-weight:600;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-top:2px;}
+
+.nav{display:flex;flex-direction:column;gap:2px;}
+.nav-item{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 12px;border-radius:var(--radius-sm);
+  color:var(--text2);font-size:13.5px;font-weight:600;
+  cursor:pointer;transition:all .12s;
+  position:relative;
+  border:1px solid transparent;
+}
+.nav-item:hover{background:var(--bg3);color:var(--text);}
+.nav-item.active{background:var(--gold-soft);color:var(--gold);border-color:var(--gold-border);}
+.nav-icon{width:18px;text-align:center;font-size:14px;}
+.nav-badge{
+  margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;
+  padding:1px 6px;border-radius:10px;
+}
+.nav-badge.gold{background:var(--gold);color:#1a1508;}
+
+.sidebar-footer{margin-top:auto;display:flex;flex-direction:column;gap:8px;}
+.theme-toggle{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:8px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);
+  font-size:12px;color:var(--text2);cursor:pointer;font-weight:600;
+}
+.reset-link{font-size:11px;color:var(--text3);text-align:center;cursor:pointer;text-decoration:underline;padding:4px;}
+.reset-link:hover{color:var(--red);}
+
+/* MAIN */
+.main{padding:22px 28px 60px;max-width:1180px;}
+
+/* TOPBAR STATS */
+.topbar{
+  display:flex;flex-wrap:wrap;gap:10px;margin-bottom:22px;
+}
+.stat-pill{
+  flex:1;min-width:140px;
+  background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);
+  padding:12px 15px;
+  display:flex;flex-direction:column;gap:3px;
+}
+.stat-pill .label{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);font-weight:700;}
+.stat-pill .value{font-size:18px;font-weight:800;font-family:'Playfair Display',serif;}
+.stat-pill .value.gold{color:var(--gold);}
+.stat-pill .value.green{color:var(--green);}
+.stat-pill .value.red{color:var(--red);}
+.stat-pill .sub{font-size:11px;color:var(--text2);}
+.meter{height:5px;border-radius:3px;background:var(--bg4);overflow:hidden;margin-top:5px;}
+.meter > div{height:100%;border-radius:3px;transition:width .3s;}
+
+.page-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;}
+.page-title h2{font-size:21px;font-weight:700;}
+.page-title p{color:var(--text2);font-size:13px;margin-top:2px;}
+
+/* CARDS / GRID */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;}
+.card{
+  background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);
+  padding:16px;display:flex;flex-direction:column;gap:10px;
+  transition:border-color .15s;
+}
+.card:hover{border-color:var(--border2);}
+.card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
+.tag-bereich{
+  font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:20px;
+  background:var(--blue-soft);color:var(--blue);white-space:nowrap;
+}
+.card h3{font-size:14.5px;font-weight:700;line-height:1.35;}
+.card .client{font-size:12px;color:var(--text2);}
+.card .desc{font-size:12.5px;color:var(--text2);line-height:1.55;}
+.diff-dots{display:flex;gap:3px;align-items:center;}
+.diff-dots span{width:6px;height:6px;border-radius:50%;background:var(--border2);}
+.diff-dots span.on{background:var(--gold);}
+.card-stats{display:flex;justify-content:space-between;font-size:12px;color:var(--text2);padding-top:8px;border-top:1px solid var(--border);}
+.card-stats b{color:var(--text);font-family:'Playfair Display',serif;font-size:14px;}
+.card-actions{display:flex;gap:8px;margin-top:2px;}
+.btn-sm{padding:8px 12px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid var(--border2);background:var(--bg3);color:var(--text);transition:all .12s;flex:1;}
+.btn-sm:hover{border-color:var(--gold);color:var(--gold);}
+.btn-sm.primary{background:var(--gold-soft);border-color:var(--gold-border);color:var(--gold);}
+.btn-sm.primary:hover{background:var(--gold);color:#1a1508;}
+.btn-sm.danger:hover{border-color:var(--red);color:var(--red);}
+.btn-sm:disabled{opacity:.35;cursor:not-allowed;}
+.expiry{font-size:10.5px;color:var(--text3);}
+.expiry.soon{color:var(--red);}
+
+.empty-state{
+  grid-column:1/-1;
+  text-align:center;padding:50px 20px;color:var(--text3);
+  border:1px dashed var(--border2);border-radius:var(--radius);font-size:13px;
+}
+
+/* AKTE (case file) card specific */
+.progress-row{display:flex;align-items:center;gap:8px;}
+.progress-row .meter{flex:1;}
+.progress-row .pct{font-size:11.5px;color:var(--text2);font-weight:700;width:34px;text-align:right;}
+.frist-warn{font-size:11px;color:var(--red);font-weight:700;}
+
+/* SECTION HEADER */
+.section-label{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin:22px 0 10px;}
+.section-label:first-child{margin-top:0;}
+
+/* SKILLS / PROFILE */
+.skill-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);}
+.skill-row:last-child{border-bottom:none;}
+.skill-name{width:160px;font-size:13px;font-weight:600;flex-shrink:0;}
+.skill-row .meter{flex:1;height:7px;}
+.skill-val{width:26px;text-align:right;font-size:12.5px;font-weight:700;color:var(--gold);}
+.skill-train{padding:5px 10px;font-size:11px;}
+
+.bereich-row{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--border);}
+.bereich-row:last-child{border-bottom:none;}
+.bereich-icon{font-size:18px;width:26px;}
+.bereich-info{flex:1;}
+.bereich-info .name{font-size:13px;font-weight:700;}
+.bereich-info .lvl{font-size:11px;color:var(--text2);}
+.bereich-row .meter{width:120px;height:6px;}
+.locked-row{opacity:.45;}
+
+/* KANZLEI upgrade cards */
+.upg-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;display:flex;flex-direction:column;gap:8px;}
+.upg-card h3{font-size:14px;}
+.upg-card p{font-size:12px;color:var(--text2);line-height:1.5;}
+.upg-meta{display:flex;justify-content:space-between;font-size:11.5px;color:var(--text3);padding-top:6px;border-top:1px solid var(--border);}
+
+/* HISTORY */
+.log-item{display:flex;gap:12px;padding:11px 0;border-bottom:1px solid var(--border);align-items:flex-start;}
+.log-item:last-child{border-bottom:none;}
+.log-icon{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+.log-icon.win{background:var(--green-soft);color:var(--green);}
+.log-icon.lose{background:var(--red-soft);color:var(--red);}
+.log-icon.settle{background:var(--blue-soft);color:var(--blue);}
+.log-icon.event{background:var(--gold-soft);color:var(--gold);}
+.log-icon.info{background:var(--bg3);color:var(--text3);}
+.log-body{flex:1;}
+.log-text{font-size:13px;line-height:1.5;}
+.log-meta{font-size:11px;color:var(--text3);margin-top:2px;}
+.log-amount{font-size:13px;font-weight:800;font-family:'Playfair Display',serif;white-space:nowrap;}
+.log-amount.pos{color:var(--green);}
+.log-amount.neg{color:var(--red);}
+
+/* MODAL */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(4,5,8,0.72);
+  display:none;align-items:center;justify-content:center;z-index:100;padding:20px;
+  backdrop-filter:blur(2px);
+}
+.modal-overlay.show{display:flex;}
+.modal{
+  background:var(--bg2);border:1px solid var(--border-2,var(--border));border-radius:18px;
+  max-width:440px;width:100%;padding:28px 26px;box-shadow:var(--shadow);
+  text-align:center;
+}
+.modal .gavel{font-size:40px;margin-bottom:8px;}
+.modal h2{font-size:19px;margin-bottom:4px;}
+.modal .modal-sub{color:var(--text2);font-size:13px;margin-bottom:18px;}
+.verdict-spin{
+  width:44px;height:44px;border-radius:50%;
+  border:3px solid var(--border2);border-top-color:var(--gold);
+  margin:10px auto 18px;animation:spin 0.8s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg);}}
+.verdict-result{display:none;}
+.verdict-result.show{display:block;}
+.verdict-badge{
+  display:inline-flex;align-items:center;gap:8px;padding:8px 18px;border-radius:30px;
+  font-weight:800;font-size:15px;margin-bottom:14px;
+}
+.verdict-badge.win{background:var(--green-soft);color:var(--green);}
+.verdict-badge.lose{background:var(--red-soft);color:var(--red);}
+.verdict-detail{font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:18px;text-align:left;background:var(--bg3);border-radius:10px;padding:12px 14px;}
+.verdict-detail div{display:flex;justify-content:space-between;}
+.verdict-detail b{color:var(--text);}
+
+/* TOAST */
+#toast-wrap{position:fixed;top:16px;right:16px;z-index:200;display:flex;flex-direction:column;gap:8px;}
+.toast{
+  background:var(--bg3);border:1px solid var(--border2);border-left:3px solid var(--gold);
+  border-radius:9px;padding:11px 16px;font-size:12.5px;max-width:300px;
+  box-shadow:var(--shadow);animation:toastin .2s ease-out;
+}
+.toast.green{border-left-color:var(--green);}
+.toast.red{border-left-color:var(--red);}
+@keyframes toastin{from{opacity:0;transform:translateX(12px);}to{opacity:1;transform:translateX(0);}}
+
+/* GAME OVER */
+#gameover-screen{
+  position:fixed;inset:0;background:rgba(4,5,8,0.9);z-index:150;
+  display:none;align-items:center;justify-content:center;padding:20px;
+}
+#gameover-screen.show{display:flex;}
+.go-card{background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:36px 32px;max-width:440px;text-align:center;}
+.go-card .icon{font-size:44px;margin-bottom:10px;}
+.go-card h2{font-size:22px;margin-bottom:8px;}
+.go-card p{color:var(--text2);font-size:13.5px;line-height:1.6;margin-bottom:18px;}
+.go-stats{display:flex;justify-content:center;gap:22px;margin-bottom:22px;}
+.go-stats div{text-align:center;}
+.go-stats b{display:block;font-family:'Playfair Display',serif;font-size:19px;color:var(--gold);}
+.go-stats span{font-size:10.5px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;}
+
+/* RESPONSIVE */
+@media (max-width:880px){
+  #app.visible{display:flex;flex-direction:column;}
+  .sidebar{position:relative;height:auto;flex-direction:row;align-items:center;padding:12px 14px;overflow-x:auto;}
+  .brand{border:none;padding:0;margin:0 14px 0 0;}
+  .nav{flex-direction:row;}
+  .nav-item{white-space:nowrap;}
+  .sidebar-footer{display:none;}
+  .main{padding:16px 14px 60px;}
+}
+</style>
+</head>
+<body>
+
+<!-- ============ START SCREEN ============ -->
+<div id="start-screen">
+  <div class="start-card">
+    <div class="start-emblem">⚖️</div>
+    <h1>Anwaltssimulator Österreich</h1>
+    <p class="sub">Eröffne deine eigene Kanzlei, übernimm Mandate aus verschiedenen Rechtsbereichen, bereite deine Akten vor und vertritt deine Mandanten vor Gericht. Verwalte Honorare, Kosten und deinen Ruf — und werde zur Koryphäe der österreichischen Anwaltschaft.</p>
+    <div class="field">
+      <label for="in-anwalt">Dein Name</label>
+      <input id="in-anwalt" type="text" placeholder="z. B. Alex Berger" maxlength="28" />
+    </div>
+    <div class="field">
+      <label for="in-kanzlei">Kanzleiname</label>
+      <input id="in-kanzlei" type="text" placeholder="z. B. Kanzlei Berger &amp; Partner" maxlength="34" />
+    </div>
+    <div class="field">
+      <label>Startbereiche</label>
+      <div class="start-bereiche">
+        <span>⚖️ Zivilrecht</span><span>🏠 Miet- &amp; Wohnrecht</span><span>👨‍👩‍👧 Familienrecht</span>
+      </div>
+    </div>
+    <button class="btn btn-gold btn-block" onclick="startGame()">Kanzlei eröffnen →</button>
+    <p class="start-hint">5.000&nbsp;€ Startkapital · Weitere Rechtsbereiche schaltest du mit Level &amp; Ruf frei.<br>Dein Fortschritt wird lokal in deinem Browser gespeichert.</p>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div id="app">
+  <div class="sidebar">
+    <div class="brand">
+      <div class="brand-emblem">⚖️</div>
+      <div class="brand-name" id="brand-kanzlei">Kanzlei</div>
+    </div>
+    <div class="nav" id="nav">
+      <div class="nav-item" data-tab="dashboard"><span class="nav-icon">📊</span>Dashboard</div>
+      <div class="nav-item" data-tab="mandanten"><span class="nav-icon">👥</span>Mandanten<span class="nav-badge gold" id="badge-offers" style="display:none"></span></div>
+      <div class="nav-item" data-tab="akten"><span class="nav-icon">📁</span>Meine Akten<span class="nav-badge" id="badge-akten" style="display:none"></span></div>
+      <div class="nav-item" data-tab="kanzlei"><span class="nav-icon">🏛️</span>Kanzlei</div>
+      <div class="nav-item" data-tab="profil"><span class="nav-icon">🎓</span>Anwalt</div>
+      <div class="nav-item" data-tab="verlauf"><span class="nav-icon">🗒️</span>Verlauf</div>
+    </div>
+    <div class="sidebar-footer">
+      <div class="theme-toggle" onclick="toggleTheme()"><span id="theme-label">🌙 Dark Mode</span><span>⇄</span></div>
+      <span class="reset-link" onclick="confirmReset()">Spiel zurücksetzen</span>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="topbar" id="topbar"></div>
+    <div id="page"></div>
+  </div>
+</div>
+
+<!-- ============ VERDICT MODAL ============ -->
+<div class="modal-overlay" id="verdict-overlay">
+  <div class="modal">
+    <div id="verdict-loading">
+      <div class="gavel">⚖️</div>
+      <h2>Verhandlung läuft…</h2>
+      <p class="modal-sub" id="verdict-court"></p>
+      <div class="verdict-spin"></div>
+      <p class="modal-sub">Das Gericht berät sich.</p>
+    </div>
+    <div class="verdict-result" id="verdict-result"></div>
+  </div>
+</div>
+
+<!-- ============ GAME OVER ============ -->
+<div id="gameover-screen">
+  <div class="go-card">
+    <div class="icon" id="go-icon">📉</div>
+    <h2 id="go-title">Insolvenz</h2>
+    <p id="go-text"></p>
+    <div class="go-stats">
+      <div><b id="go-tage">0</b><span>Tage</span></div>
+      <div><b id="go-siege">0</b><span>Siege</span></div>
+      <div><b id="go-level">0</b><span>Level</span></div>
+    </div>
+    <button class="btn btn-gold btn-block" onclick="confirmReset(true)">Neu starten</button>
+  </div>
+</div>
+
+<div id="toast-wrap"></div>
+
+<script>
+/* =========================================================
+   DATA
+   ========================================================= */
+const FIRST_NAMES = ["Maximilian","Sophie","Lukas","Anna","Florian","Julia","Stefan","Katharina","Michael","Laura","Thomas","Magdalena","Andreas","Elisabeth","Christoph","Barbara","Wolfgang","Sabine","Georg","Petra","Simon","Nina","David","Vera","Markus","Claudia","Bernhard","Melanie","Alexander","Theresa"];
+const LAST_NAMES = ["Gruber","Huber","Bauer","Wagner","Pichler","Steiner","Moser","Mayer","Hofer","Leitner","Berger","Fuchs","Eder","Fischer","Schmid","Winkler","Weber","Schwarz","Maier","Wolf","Reiter","Aigner","Wimmer","Egger","Binder"];
+
+const GERICHTE = ["Bezirksgericht Innere Stadt Wien","Landesgericht für Zivilrechtssachen Wien","Landesgericht Linz","Bezirksgericht Graz-Ost","Landesgericht Salzburg","Bezirksgericht Innsbruck","Landesgericht Klagenfurt","Bezirksgericht Wels","Landesgericht Feldkirch","Bezirksgericht Wiener Neustadt"];
+
+const BEREICHE = {
+  zivilrecht:      {name:"Zivilrecht",                      icon:"⚖️", unlockLevel:1, unlockRuf:0},
+  mietrecht:       {name:"Miet- &amp; Wohnrecht",           icon:"🏠", unlockLevel:1, unlockRuf:0},
+  familienrecht:   {name:"Familienrecht",                    icon:"👨‍👩‍👧", unlockLevel:1, unlockRuf:0},
+  arbeitsrecht:    {name:"Arbeitsrecht",                     icon:"💼", unlockLevel:2, unlockRuf:0},
+  verkehrsrecht:   {name:"Verkehrsrecht",                    icon:"🚗", unlockLevel:2, unlockRuf:0},
+  erbrecht:        {name:"Erbrecht",                         icon:"📜", unlockLevel:3, unlockRuf:15},
+  strafrecht:      {name:"Strafrecht",                       icon:"🚨", unlockLevel:4, unlockRuf:25},
+  wirtschaftsrecht:{name:"Wirtschafts- &amp; Gesellschaftsrecht", icon:"🏢", unlockLevel:5, unlockRuf:35},
+};
+
+const CASE_TEMPLATES = {
+  zivilrecht:[
+    {title:"Schadenersatz nach Wasserschaden", desc:"{c} verlangt von der Hausverwaltung Schadenersatz nach einem Rohrbruch, der die Wohnung stark beschädigt hat.", sw:[2000,15000], sg:[1,3]},
+    {title:"Gewährleistungsklage wegen Pfusch am Bau", desc:"{c} beauftragte eine Baufirma mit einer Terrassensanierung — nach der Fertigstellung zeigen sich massive Mängel.", sw:[3000,20000], sg:[1,3]},
+    {title:"Nachbarschaftsstreit um die Grundstücksgrenze", desc:"{c} und der Nachbar streiten seit Monaten über den genauen Grenzverlauf und einen zu hoch gewachsenen Zaun.", sw:[1500,8000], sg:[1,2]},
+    {title:"Streit um eine geplatzte Onlinebestellung", desc:"{c} hat für eine Sonderanfertigung vorausbezahlt, die nie geliefert wurde.", sw:[800,6000], sg:[1,2]},
+  ],
+  mietrecht:[
+    {title:"Streit um die Kautionsrückzahlung", desc:"{c} bekommt die Mietkaution nach Auszug nicht in voller Höhe zurück, obwohl die Wohnung ordnungsgemäß übergeben wurde.", sw:[500,4000], sg:[1,2]},
+    {title:"Räumungsklage wegen Mietrückstands", desc:"Der Vermieter droht {c} mit Räumungsklage — es geht um mehrere Monate Mietrückstand nach Jobverlust.", sw:[2000,9000], sg:[2,4]},
+    {title:"Mietzinsminderung wegen Schimmelbefall", desc:"{c} kämpft seit Monaten mit Schimmel in der Mietwohnung und will den Mietzins mindern lassen.", sw:[1000,6000], sg:[1,3]},
+    {title:"Unwirksame Befristung des Mietvertrags", desc:"{c} bezweifelt, dass die Befristung des eigenen Mietvertrags rechtsgültig zustande gekommen ist.", sw:[1500,7000], sg:[2,3]},
+  ],
+  familienrecht:[
+    {title:"Scheidungsverfahren mit Obsorgestreit", desc:"{c} lässt sich scheiden — strittig ist vor allem die Obsorge für die beiden gemeinsamen Kinder.", sw:[3000,18000], sg:[3,5]},
+    {title:"Unterhaltsstreit nach der Trennung", desc:"{c} fordert vom Expartner angemessenen Unterhalt für sich und die Kinder.", sw:[1500,9000], sg:[2,4]},
+    {title:"Aufteilung des ehelichen Vermögens", desc:"{c} und der Expartner können sich nicht auf die Aufteilung von Wohnung, Auto und Ersparnissen einigen.", sw:[4000,22000], sg:[3,5]},
+    {title:"Antrag auf Besuchsrechtsregelung", desc:"{c} möchte ein gerichtlich geregeltes, verlässliches Besuchsrecht für die gemeinsame Tochter durchsetzen.", sw:[1000,5000], sg:[2,3]},
+  ],
+  arbeitsrecht:[
+    {title:"Anfechtung einer Kündigung", desc:"{c} wurde überraschend gekündigt und vermutet, dass die Kündigung sozialwidrig oder gar diskriminierend war.", sw:[3000,16000], sg:[2,4]},
+    {title:"Ausständige Überstunden", desc:"{c} hat über Jahre unbezahlte Überstunden geleistet und will diese nun einklagen.", sw:[2000,12000], sg:[1,3]},
+    {title:"Mobbingvorwurf am Arbeitsplatz", desc:"{c} fühlt sich vom Vorgesetzten systematisch schikaniert und will Schadenersatz sowie eine Klarstellung erwirken.", sw:[2500,14000], sg:[3,4]},
+    {title:"Streit um ein ausständiges Zeugnis", desc:"{c} bekommt vom Ex-Arbeitgeber kein ordentliches Dienstzeugnis ausgestellt.", sw:[500,3000], sg:[1,2]},
+  ],
+  verkehrsrecht:[
+    {title:"Schadenersatz nach Verkehrsunfall", desc:"{c} wurde bei einem Auffahrunfall unverschuldet verletzt, die gegnerische Versicherung zahlt nicht ausreichend.", sw:[2000,14000], sg:[1,3]},
+    {title:"Einspruch gegen Führerscheinentzug", desc:"{c} soll den Führerschein wegen einer Geschwindigkeitsübertretung verlieren und möchte dagegen vorgehen.", sw:[1000,5000], sg:[2,3]},
+    {title:"Streit mit der Versicherung nach Blechschaden", desc:"Die Versicherung von {c} verweigert die volle Schadensregulierung nach einem Parkplatzunfall.", sw:[800,6000], sg:[1,2]},
+    {title:"Verfahren nach Fahrerflucht-Vorwurf", desc:"{c} wird vorgeworfen, sich nach einem kleinen Blechschaden unerlaubt entfernt zu haben.", sw:[1500,7000], sg:[2,4]},
+  ],
+  erbrecht:[
+    {title:"Erbstreit unter Geschwistern", desc:"{c} streitet mit den Geschwistern über die gerechte Aufteilung des elterlichen Erbes.", sw:[5000,30000], sg:[2,4]},
+    {title:"Anfechtung eines Testaments", desc:"{c} zweifelt an der Gültigkeit eines kurz vor dem Tod des Erblassers geänderten Testaments.", sw:[8000,40000], sg:[3,5]},
+    {title:"Pflichtteilsklage", desc:"{c} wurde im Testament übergangen und macht den gesetzlichen Pflichtteil geltend.", sw:[4000,25000], sg:[2,4]},
+  ],
+  strafrecht:[
+    {title:"Verteidigung bei Vorwurf fahrlässiger Körperverletzung", desc:"{c} wird nach einem Vorfall im Straßenverkehr fahrlässige Körperverletzung vorgeworfen.", sw:[3000,15000], sg:[2,4]},
+    {title:"Strafverfahren wegen Betrugsvorwurf", desc:"{c} steht unter dem Verdacht, einen Geschäftspartner arglistig getäuscht zu haben.", sw:[5000,25000], sg:[3,5]},
+    {title:"Verteidigung bei Diebstahlvorwurf", desc:"{c} wird beschuldigt, Ware aus einem Geschäft entwendet zu haben, und bestreitet dies vehement.", sw:[1500,8000], sg:[1,3]},
+    {title:"Vorwurf der Sachbeschädigung nach Streit", desc:"{c} soll im Zuge eines Streits Eigentum des Nachbarn beschädigt haben.", sw:[1000,6000], sg:[1,3]},
+  ],
+  wirtschaftsrecht:[
+    {title:"Gesellschafterstreit in einer GmbH", desc:"{c} liegt als Mitgesellschafter im Streit mit dem Geschäftspartner über die Unternehmensführung.", sw:[10000,50000], sg:[3,5]},
+    {title:"Forderungseinbringung gegen insolventen Kunden", desc:"Ein Kunde von {c} zahlt seit Monaten nicht — es drohen selbst Liquiditätsprobleme.", sw:[5000,30000], sg:[2,4]},
+    {title:"Vertragsstreit zwischen Geschäftspartnern", desc:"{c} wirft dem Geschäftspartner vor, zentrale Klauseln des Kooperationsvertrags zu verletzen.", sw:[8000,35000], sg:[3,4]},
+  ],
+};
+
+const ARBEITSRECHT_GERICHT = "Arbeits- und Sozialgericht Wien";
+const STRAFRECHT_GERICHT = "Landesgericht für Strafsachen Wien";
+
+const EVENTS = [
+  {text:"Ein ehemaliger Mandant empfiehlt dich in seinem Bekanntenkreis weiter.", ruf:3, money:0},
+  {text:"Ein negativer Erfahrungsbericht über deine Kanzlei kursiert online.", ruf:-4, money:0},
+  {text:"Die Kanzlei-EDV streikt — die Reparatur kostet dich einen hübschen Batzen Geld.", ruf:0, money:-260},
+  {text:"Du wirst als Gastvortragende:r an die Universität eingeladen.", ruf:2, money:0},
+  {text:"Ein Kollege überweist dir spontan ein interessantes Mandat.", ruf:1, money:0, extraOffer:true},
+  {text:"Die Steuerberatung meldet eine Nachzahlung.", ruf:0, money:-400},
+  {text:"Ein Artikel in der Wirtschaftspresse erwähnt einen deiner Fälle positiv.", ruf:4, money:0},
+  {text:"Kleine Büro-Reparaturen fallen an.", ruf:0, money:-150},
+];
+
+const RUF_LABELS = [[0,"Unbekannt"],[21,"Regional bekannt"],[41,"Angesehen"],[61,"Renommiert"],[81,"Landesweit berühmt"]];
+const TITLE_BY_LEVEL = [[1,"Konzipient:in"],[3,"Rechtsanwält:in"],[6,"Erfahrene:r Rechtsanwält:in"],[10,"Renommierte:r Kanzleiinhaber:in"]];
+
+/* =========================================================
+   STATE
+   ========================================================= */
+let state = null;
+let ui = { tab:"dashboard", theme:"dark" };
+const SAVE_KEY = "anwaltsim_state_v1";
+const THEME_KEY = "anwaltsim_theme";
+
+function defaultState(anwalt, kanzlei){
+  const bereicheLevel = {};
+  Object.keys(BEREICHE).forEach(k => bereicheLevel[k] = {level:1, xp:0, xpNext:40});
+  return {
+    started:true, anwaltName:anwalt, kanzleiName:kanzlei,
+    tag:1, kontostand:5000, ruf:50, level:1, xp:0, xpNext:100,
+    skills:{redegewandtheit:3, verhandlungsgeschick:3, aktenkunde:3},
+    bereicheLevel,
+    staff:{assistenten:0, juniorpartner:0}, officeUpgraded:false,
+    maxAkten:3, arbeitsSlotsBase:3, arbeitsSlotsToday:3,
+    offers:[], akten:[], history:[],
+    gameOver:false, gameOverReason:"", nextId:1,
+    siegeCount:0,
+  };
+}
+
+function save(){ localStorage.setItem(SAVE_KEY, JSON.stringify(state)); }
+function load(){ const s = localStorage.getItem(SAVE_KEY); return s ? JSON.parse(s) : null; }
+
+/* =========================================================
+   HELPERS
+   ========================================================= */
+function uid(){ return state.nextId++; }
+function randInt(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
+function randChoice(arr){ return arr[randInt(0,arr.length-1)]; }
+function fmtMoney(n){ return (n<0?"-":"") + Math.abs(Math.round(n)).toLocaleString("de-AT") + " €"; }
+function clamp(v,min,max){ return Math.min(max,Math.max(min,v)); }
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+function rufLabel(r){
+  let lbl = RUF_LABELS[0][1];
+  for(const [min,l] of RUF_LABELS){ if(r>=min) lbl=l; }
+  return lbl;
+}
+function titleForLevel(lvl){
+  let t = TITLE_BY_LEVEL[0][1];
+  for(const [min,l] of TITLE_BY_LEVEL){ if(lvl>=min) t=l; }
+  return t;
+}
+function unlockedBereiche(){
+  return Object.keys(BEREICHE).filter(k => state.level>=BEREICHE[k].unlockLevel && state.ruf>=BEREICHE[k].unlockRuf);
+}
+function gerichtFor(bereich){
+  if(bereich==="arbeitsrecht") return ARBEITSRECHT_GERICHT;
+  if(bereich==="strafrecht") return STRAFRECHT_GERICHT;
+  return randChoice(GERICHTE);
+}
+
+/* =========================================================
+   TOASTS
+   ========================================================= */
+function toast(msg, type){
+  const wrap = document.getElementById("toast-wrap");
+  const el = document.createElement("div");
+  el.className = "toast" + (type ? " "+type : "");
+  el.textContent = msg;
+  wrap.appendChild(el);
+  setTimeout(()=>{ el.style.transition="opacity .3s"; el.style.opacity="0"; setTimeout(()=>el.remove(),300); }, 3200);
+}
+
+/* =========================================================
+   GAME LOGIC — MANDANTEN / OFFERS
+   ========================================================= */
+function generateOffer(){
+  const pool = unlockedBereiche();
+  if(!pool.length) return null;
+  const bereich = randChoice(pool);
+  const tpl = randChoice(CASE_TEMPLATES[bereich]);
+  const client = randChoice(FIRST_NAMES) + " " + randChoice(LAST_NAMES);
+  let streitwert = randInt(tpl.sw[0], tpl.sw[1]);
+  if(state.officeUpgraded) streitwert = Math.round(streitwert * 1.2);
+  const schwierigkeit = randInt(tpl.sg[0], tpl.sg[1]);
+  const factor = 0.10 + schwierigkeit*0.025;
+  const honorar = Math.max(350, Math.round(streitwert*factor));
+  return {
+    id:uid(), client, bereich, title:tpl.title, desc:tpl.desc.replace("{c}", client),
+    streitwert, schwierigkeit, honorar,
+    verfallTag: state.tag + randInt(2,5),
+  };
+}
+
+function maybeGenerateOffers(){
+  if(state.offers.length >= 7) return;
+  let count = state.ruf>=70 ? randInt(1,3) : state.ruf>=40 ? randInt(0,2) : randInt(0,1);
+  for(let i=0;i<count && state.offers.length<7;i++){
+    const o = generateOffer();
+    if(o) state.offers.push(o);
+  }
+}
+
+function acceptOffer(id){
+  if(state.akten.length >= state.maxAkten){ toast("Deine Kanzlei kann aktuell nicht mehr Akten gleichzeitig bearbeiten. Stelle Personal ein!", "red"); return; }
+  const idx = state.offers.findIndex(o=>o.id===id);
+  if(idx<0) return;
+  const o = state.offers.splice(idx,1)[0];
+  state.akten.push({
+    id:o.id, client:o.client, bereich:o.bereich, title:o.title, desc:o.desc,
+    streitwert:o.streitwert, schwierigkeit:o.schwierigkeit, honorar:o.honorar,
+    gericht: gerichtFor(o.bereich),
+    vorbereitung:0, gutachten:false,
+    friststag: state.tag + randInt(7,13),
+  });
+  toast("Mandat von " + o.client + " angenommen.", "green");
+  save(); render();
+}
+
+function declineOffer(id){
+  state.offers = state.offers.filter(o=>o.id!==id);
+  save(); render();
+}
+
+/* =========================================================
+   GAME LOGIC — AKTEN (case work)
+   ========================================================= */
+function workOnAkte(id){
+  if(state.arbeitsSlotsToday<=0){ toast("Keine Arbeitszeit mehr für heute übrig. Gehe zum nächsten Tag.", "red"); return; }
+  const akte = state.akten.find(a=>a.id===id);
+  if(!akte) return;
+  const gain = 8 + state.skills.aktenkunde*1.4 + randInt(-2,3);
+  akte.vorbereitung = clamp(Math.round(akte.vorbereitung+gain),0,100);
+  state.arbeitsSlotsToday--;
+  toast("An der Akte \"" + akte.title + "\" gearbeitet (+" + Math.round(gain) + "% Vorbereitung).");
+  save(); render();
+}
+
+function gutachtenKaufen(id){
+  const akte = state.akten.find(a=>a.id===id);
+  if(!akte || akte.gutachten) return;
+  const cost = Math.max(300, Math.round(akte.streitwert*0.04));
+  if(state.kontostand < cost){ toast("Nicht genug Geld für ein Gutachten (" + fmtMoney(cost) + ").", "red"); return; }
+  state.kontostand -= cost;
+  akte.gutachten = true;
+  toast("Gutachten eingeholt für " + fmtMoney(cost) + " — erhöht die Erfolgschance.", "green");
+  save(); render();
+}
+
+function winChance(akte){
+  let c = 45;
+  c += (akte.vorbereitung/100)*30;
+  const bl = state.bereicheLevel[akte.bereich].level;
+  c += (bl-1)*3;
+  c += (state.skills.redegewandtheit + state.skills.verhandlungsgeschick - 6)*1.5;
+  c -= (akte.schwierigkeit-1)*7;
+  c += (state.ruf-50)/8;
+  if(akte.gutachten) c += 8;
+  return clamp(Math.round(c),8,92);
+}
+
+function vergleichSchliessen(id){
+  const akte = state.akten.find(a=>a.id===id);
+  if(!akte) return;
+  const payout = Math.round(akte.honorar*0.55);
+  state.kontostand += payout;
+  state.ruf = clamp(state.ruf+1,0,100);
+  gainXp(12 + akte.schwierigkeit*5);
+  gainBereichXp(akte.bereich, 10 + akte.schwierigkeit*4);
+  addHistory("settle", akte.client + ": außergerichtlicher Vergleich in Sache \"" + akte.title + "\".", payout);
+  state.akten = state.akten.filter(a=>a.id!==id);
+  toast("Vergleich erzielt: " + fmtMoney(payout) + " erhalten.", "green");
+  save(); render();
+}
+
+function addHistory(type, text, amount){
+  state.history.unshift({tag:state.tag, type, text, amount: amount||0});
+  if(state.history.length>200) state.history.length = 200;
+}
+
+function gainXp(amount){
+  state.xp += amount;
+  let leveledUp = false;
+  while(state.xp >= state.xpNext){
+    state.xp -= state.xpNext;
+    state.level++;
+    state.xpNext = Math.round(state.xpNext*1.32);
+    leveledUp = true;
+    if(state.level % 3 === 0) state.maxAkten++;
+  }
+  if(leveledUp){
+    addHistory("info", "Level Up! Du bist jetzt Level " + state.level + " (" + titleForLevel(state.level) + ").", 0);
+    toast("🎉 Level Up! Jetzt Level " + state.level, "green");
+  }
+}
+
+function gainBereichXp(bereich, amount){
+  const b = state.bereicheLevel[bereich];
+  b.xp += amount;
+  while(b.xp >= b.xpNext){
+    b.xp -= b.xpNext;
+    b.level++;
+    b.xpNext = Math.round(b.xpNext*1.4);
+    toast(BEREICHE[bereich].name.replace(/&amp;/g,"&") + ": Fachwissen-Level " + b.level + "!", "green");
+  }
+}
+
+function resolveTrial(akte, forced){
+  const chance = winChance(akte);
+  const roll = randInt(1,100);
+  const win = roll <= chance;
+  let text, amount;
+  if(win){
+    amount = akte.honorar;
+    state.kontostand += amount;
+    const rufGain = 2+akte.schwierigkeit;
+    state.ruf = clamp(state.ruf+rufGain,0,100);
+    gainXp(20 + akte.schwierigkeit*10);
+    gainBereichXp(akte.bereich, 15 + akte.schwierigkeit*8);
+    state.siegeCount++;
+    text = akte.client + ": Sieg vor dem " + akte.gericht + " in Sache \"" + akte.title + "\".";
+    addHistory("win", text, amount);
+  } else {
+    const kosten = Math.min(1500, Math.round(akte.streitwert*0.05*(0.5+Math.random()*0.5)));
+    amount = -kosten;
+    state.kontostand -= kosten;
+    const rufLoss = 2+akte.schwierigkeit;
+    state.ruf = clamp(state.ruf-rufLoss,0,100);
+    gainXp(8 + akte.schwierigkeit*3);
+    gainBereichXp(akte.bereich, 5 + akte.schwierigkeit*3);
+    text = akte.client + ": Niederlage vor dem " + akte.gericht + " in Sache \"" + akte.title + "\".";
+    addHistory("lose", text, amount);
+  }
+  state.akten = state.akten.filter(a=>a.id!==akte.id);
+  return {win, chance, roll, amount};
+}
+
+function startVerhandlung(id){
+  const akte = state.akten.find(a=>a.id===id);
+  if(!akte) return;
+  const overlay = document.getElementById("verdict-overlay");
+  const loading = document.getElementById("verdict-loading");
+  const resultEl = document.getElementById("verdict-result");
+  document.getElementById("verdict-court").textContent = akte.gericht;
+  loading.style.display = "block";
+  resultEl.classList.remove("show");
+  resultEl.innerHTML = "";
+  overlay.classList.add("show");
+
+  setTimeout(()=>{
+    const r = resolveTrial(akte, false);
+    loading.style.display = "none";
+    resultEl.innerHTML = `
+      <div class="verdict-badge ${r.win?'win':'lose'}">${r.win ? '✅ Sieg' : '❌ Niederlage'}</div>
+      <h2>${esc(akte.title)}</h2>
+      <p class="modal-sub">${esc(akte.gericht)} — Mandant: ${esc(akte.client)}</p>
+      <div class="verdict-detail">
+        <div><span>Erfolgschance war</span><b>${r.chance}%</b></div>
+        <div><span>${r.win?'Honorar erhalten':'Verfahrenskosten'}</span><b style="color:${r.win?'var(--green)':'var(--red)'}">${fmtMoney(r.amount)}</b></div>
+        <div><span>Ruf-Auswirkung</span><b>${r.win?'+':'-'}${2+akte.schwierigkeit}</b></div>
+      </div>
+      <button class="btn btn-gold btn-block" onclick="closeVerdict()">Weiter</button>
+    `;
+    resultEl.classList.add("show");
+    save(); render();
+  }, 1300);
+}
+
+function closeVerdict(){
+  document.getElementById("verdict-overlay").classList.remove("show");
+}
+
+/* =========================================================
+   GAME LOGIC — KANZLEI (staff / upgrades / training)
+   ========================================================= */
+const STAFF_CONFIG = {
+  assistenten:{ label:"Kanzleiassistent:in", cost:2500, upkeep:350, max:3, effectTxt:"+1 Arbeitsslot/Tag, +1 max. Akten" },
+  juniorpartner:{ label:"Juniorpartner:in", cost:9000, upkeep:1000, max:2, effectTxt:"+2 Arbeitsslots/Tag, +2 max. Akten, +8% Honorar" },
+};
+
+function hireStaff(type){
+  const cfg = STAFF_CONFIG[type];
+  if(state.staff[type] >= cfg.max){ toast("Maximum bereits erreicht.", "red"); return; }
+  if(state.kontostand < cfg.cost){ toast("Nicht genug Geld (" + fmtMoney(cfg.cost) + " nötig).", "red"); return; }
+  state.kontostand -= cfg.cost;
+  state.staff[type]++;
+  recalcCapacity();
+  addHistory("info", cfg.label + " eingestellt.", -cfg.cost);
+  toast(cfg.label + " eingestellt!", "green");
+  save(); render();
+}
+
+function recalcCapacity(){
+  state.maxAktenComputed = 3 + Math.floor((state.level-1)/3) + state.staff.assistenten + state.staff.juniorpartner*2;
+  state.maxAkten = Math.max(state.maxAkten, state.maxAktenComputed);
+  state.arbeitsSlotsBase = 3 + state.staff.assistenten + state.staff.juniorpartner*2;
+}
+
+function upgradeOffice(){
+  const cost = 5000;
+  if(state.officeUpgraded){ toast("Büro bereits ausgebaut.", "red"); return; }
+  if(state.kontostand < cost){ toast("Nicht genug Geld (" + fmtMoney(cost) + " nötig).", "red"); return; }
+  state.kontostand -= cost;
+  state.officeUpgraded = true;
+  state.ruf = clamp(state.ruf+5,0,100);
+  addHistory("info", "Repräsentative Kanzleiräume bezogen — Ruf und Mandantenqualität steigen.", -cost);
+  toast("Kanzlei ausgebaut! +5 Ruf, hochwertigere Mandate.", "green");
+  save(); render();
+}
+
+function weeklyCosts(){
+  let rent = state.officeUpgraded ? 600 : 350;
+  let upkeep = state.staff.assistenten*STAFF_CONFIG.assistenten.upkeep + state.staff.juniorpartner*STAFF_CONFIG.juniorpartner.upkeep;
+  return {rent, upkeep, total:rent+upkeep};
+}
+
+function trainSkill(skill){
+  const cur = state.skills[skill];
+  if(cur>=10){ toast("Bereits maximal ausgebildet.", "red"); return; }
+  const cost = 400*cur;
+  if(state.kontostand < cost){ toast("Nicht genug Geld (" + fmtMoney(cost) + " nötig).", "red"); return; }
+  state.kontostand -= cost;
+  state.skills[skill] = cur+1;
+  addHistory("info", "Fortbildung absolviert: " + skillLabel(skill) + " gesteigert.", -cost);
+  toast(skillLabel(skill) + " verbessert auf " + (cur+1) + "!", "green");
+  save(); render();
+}
+function skillLabel(s){
+  return s==="redegewandtheit" ? "Redegewandtheit" : s==="verhandlungsgeschick" ? "Verhandlungsgeschick" : "Aktenkunde";
+}
+
+/* =========================================================
+   GAME LOGIC — DAY ADVANCE / EVENTS
+   ========================================================= */
+function triggerRandomEvent(){
+  if(Math.random() > 0.20) return;
+  const ev = randChoice(EVENTS);
+  state.ruf = clamp(state.ruf+ev.ruf,0,100);
+  state.kontostand += ev.money;
+  addHistory("event", ev.text, ev.money);
+  if(ev.extraOffer){ const o = generateOffer(); if(o) state.offers.push(o); }
+}
+
+function advanceDay(){
+  if(state.gameOver) return;
+  state.tag++;
+  recalcCapacity();
+  state.arbeitsSlotsToday = state.arbeitsSlotsBase;
+
+  // expire old offers
+  state.offers = state.offers.filter(o=>{
+    if(o.verfallTag < state.tag){ return false; }
+    return true;
+  });
+
+  // forced trials for overdue akten
+  const overdue = state.akten.filter(a=>a.friststag <= state.tag);
+  overdue.forEach(a=>{
+    const r = resolveTrial(a, true);
+    toast((r.win?"✅ Gewonnen":"❌ Verloren") + ": " + a.title + " (Frist erreicht)", r.win?"green":"red");
+  });
+
+  // weekly costs
+  if(state.tag % 7 === 1 && state.tag>1){
+    const wc = weeklyCosts();
+    state.kontostand -= wc.total;
+    addHistory("info", "Wöchentliche Fixkosten (Miete &amp; Personal).", -wc.total);
+  }
+
+  triggerRandomEvent();
+  maybeGenerateOffers();
+  checkGameOver();
+  save(); render();
+}
+
+function checkGameOver(){
+  if(state.kontostand <= -4000){
+    state.gameOver = true; state.gameOverReason = "insolvenz";
+  } else if(state.ruf<=0){
+    state.gameOver = true; state.gameOverReason = "kammer";
+  }
+}
+
+/* =========================================================
+   INIT / RESET
+   ========================================================= */
+function startGame(){
+  const anwalt = document.getElementById("in-anwalt").value.trim() || "Unbekannt";
+  const kanzlei = document.getElementById("in-kanzlei").value.trim() || (anwalt + " Rechtsanwaltskanzlei");
+  state = defaultState(anwalt, kanzlei);
+  recalcCapacity();
+  maybeGenerateOffers();
+  maybeGenerateOffers();
+  save();
+  document.getElementById("start-screen").style.display = "none";
+  document.getElementById("app").classList.add("visible");
+  render();
+}
+
+function confirmReset(fromGameOver){
+  if(!fromGameOver && !confirm("Spiel wirklich zurücksetzen? Der gesamte Fortschritt geht verloren.")) return;
+  localStorage.removeItem(SAVE_KEY);
+  location.reload();
+}
+
+function toggleTheme(){
+  ui.theme = ui.theme==="dark" ? "light" : "dark";
+  applyTheme();
+  localStorage.setItem(THEME_KEY, ui.theme);
+}
+function applyTheme(){
+  document.documentElement.setAttribute("data-theme", ui.theme==="light" ? "light" : "dark");
+  const lbl = document.getElementById("theme-label");
+  if(lbl) lbl.textContent = ui.theme==="dark" ? "🌙 Dark Mode" : "☀️ Light Mode";
+}
+
+window.onload = () => {
+  const savedTheme = localStorage.getItem(THEME_KEY);
+  ui.theme = savedTheme || "dark";
+  applyTheme();
+
+  const s = load();
+  if(s && s.started){
+    state = s;
+    recalcCapacity();
+    document.getElementById("start-screen").style.display = "none";
+    document.getElementById("app").classList.add("visible");
+    render();
+  }
+
+  document.getElementById("nav").addEventListener("click", (e)=>{
+    const item = e.target.closest(".nav-item");
+    if(!item) return;
+    ui.tab = item.dataset.tab;
+    render();
+  });
+};
+
+/* =========================================================
+   RENDER
+   ========================================================= */
+function render(){
+  if(!state) return;
+  if(state.gameOver){ renderGameOver(); }
+  renderNav();
+  renderTopbar();
+  renderPage();
+}
+
+function renderNav(){
+  document.getElementById("brand-kanzlei").innerHTML = esc(state.kanzleiName);
+  document.querySelectorAll(".nav-item").forEach(el=>{
+    el.classList.toggle("active", el.dataset.tab===ui.tab);
+  });
+  const offerBadge = document.getElementById("badge-offers");
+  if(state.offers.length){ offerBadge.style.display="inline-block"; offerBadge.textContent=state.offers.length; }
+  else offerBadge.style.display="none";
+  const aktenBadge = document.getElementById("badge-akten");
+  const urgent = state.akten.filter(a=>a.friststag-state.tag<=2).length;
+  if(urgent){ aktenBadge.style.display="inline-block"; aktenBadge.textContent=urgent; }
+  else aktenBadge.style.display="none";
+}
+
+function renderTopbar(){
+  const rufPct = state.ruf;
+  const rufColor = state.ruf>=70?"var(--green)":state.ruf>=35?"var(--gold)":"var(--red)";
+  const xpPct = Math.round((state.xp/state.xpNext)*100);
+  document.getElementById("topbar").innerHTML = `
+    <div class="stat-pill">
+      <span class="label">Tag</span>
+      <span class="value">${state.tag}</span>
+      <span class="sub">${titleForLevel(state.level)}</span>
+    </div>
+    <div class="stat-pill">
+      <span class="label">Kontostand</span>
+      <span class="value ${state.kontostand<0?'red':'gold'}">${fmtMoney(state.kontostand)}</span>
+      <span class="sub">Fixkosten/Woche: ${fmtMoney(weeklyCosts().total)}</span>
+    </div>
+    <div class="stat-pill">
+      <span class="label">Ruf</span>
+      <span class="value" style="color:${rufColor}">${state.ruf}/100</span>
+      <div class="meter"><div style="width:${rufPct}%;background:${rufColor}"></div></div>
+    </div>
+    <div class="stat-pill">
+      <span class="label">Level ${state.level}</span>
+      <span class="value">${state.xp} / ${state.xpNext} XP</span>
+      <div class="meter"><div style="width:${xpPct}%;background:var(--blue)"></div></div>
+    </div>
+    <div class="stat-pill">
+      <button class="btn btn-gold btn-block" onclick="advanceDay()">Nächster Tag →</button>
+      <span class="sub" style="text-align:center;margin-top:4px;">Arbeitszeit heute: ${state.arbeitsSlotsToday}/${state.arbeitsSlotsBase}</span>
+    </div>
+  `;
+}
+
+function renderPage(){
+  const page = document.getElementById("page");
+  if(ui.tab==="dashboard") page.innerHTML = pageDashboard();
+  else if(ui.tab==="mandanten") page.innerHTML = pageMandanten();
+  else if(ui.tab==="akten") page.innerHTML = pageAkten();
+  else if(ui.tab==="kanzlei") page.innerHTML = pageKanzlei();
+  else if(ui.tab==="profil") page.innerHTML = pageProfil();
+  else if(ui.tab==="verlauf") page.innerHTML = pageVerlauf();
+}
+
+function diffDots(n){
+  let out = '<div class="diff-dots">';
+  for(let i=1;i<=5;i++) out += `<span class="${i<=n?'on':''}"></span>`;
+  out += '</div>';
+  return out;
+}
+
+function pageDashboard(){
+  const recentAkten = state.akten.slice(0,3);
+  const recentHistory = state.history.slice(0,5);
+  const recentOffers = state.offers.slice(0,3);
+  return `
+    <div class="page-title">
+      <div><h2>Willkommen zurück, ${esc(state.anwaltName)}</h2><p>${esc(state.kanzleiName)} — ${rufLabel(state.ruf)}</p></div>
+    </div>
+
+    <div class="section-label">Offene Mandate (${state.offers.length})</div>
+    <div class="grid">
+      ${recentOffers.length ? recentOffers.map(offerCard).join("") : `<div class="empty-state">Aktuell liegen keine neuen Mandatsangebote vor. Warte auf den nächsten Tag.</div>`}
+    </div>
+
+    <div class="section-label">Aktive Akten (${state.akten.length}/${state.maxAkten})</div>
+    <div class="grid">
+      ${recentAkten.length ? recentAkten.map(akteCard).join("") : `<div class="empty-state">Keine aktiven Akten. Nimm ein Mandat unter „Mandanten" an.</div>`}
+    </div>
+
+    <div class="section-label">Letzte Ereignisse</div>
+    <div class="card" style="padding:6px 16px;">
+      ${recentHistory.length ? recentHistory.map(historyItem).join("") : `<div class="empty-state" style="border:none;">Noch keine Ereignisse.</div>`}
+    </div>
+  `;
+}
+
+function offerCard(o){
+  const daysLeft = o.verfallTag - state.tag;
+  return `
+    <div class="card">
+      <div class="card-top">
+        <span class="tag-bereich">${BEREICHE[o.bereich].icon} ${BEREICHE[o.bereich].name}</span>
+        ${diffDots(o.schwierigkeit)}
+      </div>
+      <h3>${esc(o.title)}</h3>
+      <div class="client">Mandant: ${esc(o.client)}</div>
+      <div class="desc">${esc(o.desc)}</div>
+      <div class="card-stats">
+        <span>Streitwert<br><b>${fmtMoney(o.streitwert)}</b></span>
+        <span>Honorar<br><b>${fmtMoney(o.honorar)}</b></span>
+        <span class="expiry ${daysLeft<=1?'soon':''}">Verfällt in<br><b>${daysLeft<=0?'heute':daysLeft+' Tg.'}</b></span>
+      </div>
+      <div class="card-actions">
+        <button class="btn-sm primary" onclick="acceptOffer(${o.id})" ${state.akten.length>=state.maxAkten?'disabled':''}>Annehmen</button>
+        <button class="btn-sm danger" onclick="declineOffer(${o.id})">Ablehnen</button>
+      </div>
+    </div>
+  `;
+}
+
+function akteCard(a){
+  const daysLeft = a.friststag - state.tag;
+  const chance = winChance(a);
+  return `
+    <div class="card">
+      <div class="card-top">
+        <span class="tag-bereich">${BEREICHE[a.bereich].icon} ${BEREICHE[a.bereich].name}</span>
+        ${diffDots(a.schwierigkeit)}
+      </div>
+      <h3>${esc(a.title)}</h3>
+      <div class="client">Mandant: ${esc(a.client)} · ${esc(a.gericht)}</div>
+      <div class="progress-row">
+        <div class="meter"><div style="width:${a.vorbereitung}%;background:var(--gold)"></div></div>
+        <span class="pct">${a.vorbereitung}%</span>
+      </div>
+      <div class="card-stats">
+        <span>Honorar<br><b>${fmtMoney(a.honorar)}</b></span>
+        <span>Erfolgschance<br><b>${chance}%</b></span>
+        <span class="${daysLeft<=2?'frist-warn':''}">Frist<br><b>${daysLeft<=0?'heute!':daysLeft+' Tg.'}</b></span>
+      </div>
+      <div class="card-actions">
+        <button class="btn-sm" onclick="workOnAkte(${a.id})" ${state.arbeitsSlotsToday<=0?'disabled':''}>Bearbeiten</button>
+        <button class="btn-sm" onclick="gutachtenKaufen(${a.id})" ${a.gutachten?'disabled':''}>${a.gutachten?'Gutachten ✓':'Gutachten'}</button>
+      </div>
+      <div class="card-actions">
+        <button class="btn-sm" onclick="vergleichSchliessen(${a.id})">Vergleich (${fmtMoney(Math.round(a.honorar*0.55))})</button>
+        <button class="btn-sm primary" onclick="startVerhandlung(${a.id})">Zur Verhandlung</button>
+      </div>
+    </div>
+  `;
+}
+
+function historyItem(h){
+  const iconMap = {win:"✅", lose:"❌", settle:"🤝", event:"📰", info:"ℹ️"};
+  const cls = h.type;
+  return `
+    <div class="log-item">
+      <div class="log-icon ${cls}">${iconMap[h.type]||"•"}</div>
+      <div class="log-body">
+        <div class="log-text">${h.text}</div>
+        <div class="log-meta">Tag ${h.tag}</div>
+      </div>
+      ${h.amount ? `<div class="log-amount ${h.amount>0?'pos':'neg'}">${h.amount>0?'+':''}${fmtMoney(h.amount)}</div>` : ""}
+    </div>
+  `;
+}
+
+function pageMandanten(){
+  return `
+    <div class="page-title">
+      <div><h2>Mandanten</h2><p>Neue Mandatsangebote aus deinen freigeschalteten Rechtsbereichen.</p></div>
+    </div>
+    <div class="grid">
+      ${state.offers.length ? state.offers.map(offerCard).join("") : `<div class="empty-state">Keine offenen Mandatsangebote. Gehe zum nächsten Tag, um neue Mandanten zu bekommen.</div>`}
+    </div>
+  `;
+}
+
+function pageAkten(){
+  return `
+    <div class="page-title">
+      <div><h2>Meine Akten</h2><p>${state.akten.length} von ${state.maxAkten} gleichzeitig bearbeitbaren Akten belegt.</p></div>
+    </div>
+    <div class="grid">
+      ${state.akten.length ? state.akten.map(akteCard).join("") : `<div class="empty-state">Keine aktiven Akten. Nimm unter „Mandanten" ein neues Mandat an.</div>`}
+    </div>
+  `;
+}
+
+function pageKanzlei(){
+  const wc = weeklyCosts();
+  return `
+    <div class="page-title"><div><h2>Kanzlei</h2><p>Personal einstellen, Büro ausbauen und Fixkosten im Blick behalten.</p></div></div>
+
+    <div class="section-label">Fixkosten pro Woche</div>
+    <div class="card">
+      <div class="card-stats" style="border:none;padding:0;">
+        <span>Miete<br><b>${fmtMoney(wc.rent)}</b></span>
+        <span>Personal<br><b>${fmtMoney(wc.upkeep)}</b></span>
+        <span>Gesamt<br><b style="color:var(--red)">${fmtMoney(wc.total)}</b></span>
+      </div>
+    </div>
+
+    <div class="section-label">Personal</div>
+    <div class="grid">
+      <div class="upg-card">
+        <h3>${STAFF_CONFIG.assistenten.label}</h3>
+        <p>${STAFF_CONFIG.assistenten.effectTxt}</p>
+        <div class="upg-meta"><span>Angestellt: ${state.staff.assistenten}/${STAFF_CONFIG.assistenten.max}</span><span>Upkeep ${fmtMoney(STAFF_CONFIG.assistenten.upkeep)}/Wo.</span></div>
+        <button class="btn-sm primary" onclick="hireStaff('assistenten')" ${state.staff.assistenten>=STAFF_CONFIG.assistenten.max?'disabled':''}>Einstellen (${fmtMoney(STAFF_CONFIG.assistenten.cost)})</button>
+      </div>
+      <div class="upg-card">
+        <h3>${STAFF_CONFIG.juniorpartner.label}</h3>
+        <p>${STAFF_CONFIG.juniorpartner.effectTxt}</p>
+        <div class="upg-meta"><span>Angestellt: ${state.staff.juniorpartner}/${STAFF_CONFIG.juniorpartner.max}</span><span>Upkeep ${fmtMoney(STAFF_CONFIG.juniorpartner.upkeep)}/Wo.</span></div>
+        <button class="btn-sm primary" onclick="hireStaff('juniorpartner')" ${state.staff.juniorpartner>=STAFF_CONFIG.juniorpartner.max?'disabled':''}>Einstellen (${fmtMoney(STAFF_CONFIG.juniorpartner.cost)})</button>
+      </div>
+    </div>
+
+    <div class="section-label">Ausbau</div>
+    <div class="grid">
+      <div class="upg-card">
+        <h3>Repräsentative Kanzleiräume</h3>
+        <p>Einmalig 5.000 €. Sofort +5 Ruf und höherwertige Mandate (höhere Streitwerte), aber höhere Miete.</p>
+        <div class="upg-meta"><span>${state.officeUpgraded?'Bereits ausgebaut ✓':'Noch nicht ausgebaut'}</span><span>+250 €/Wo. Miete</span></div>
+        <button class="btn-sm primary" onclick="upgradeOffice()" ${state.officeUpgraded?'disabled':''}>${state.officeUpgraded?'Ausgebaut':'Ausbauen (5.000 €)'}</button>
+      </div>
+    </div>
+  `;
+}
+
+function pageProfil(){
+  const skillRows = Object.keys(state.skills).map(s=>{
+    const val = state.skills[s];
+    const cost = 400*val;
+    return `
+      <div class="skill-row">
+        <span class="skill-name">${skillLabel(s)}</span>
+        <div class="meter"><div style="width:${val*10}%;background:var(--gold)"></div></div>
+        <span class="skill-val">${val}/10</span>
+        <button class="btn-sm skill-train" onclick="trainSkill('${s}')" ${val>=10?'disabled':''}>Fortbildung (${fmtMoney(cost)})</button>
+      </div>
+    `;
+  }).join("");
+
+  const bereichRows = Object.keys(BEREICHE).map(k=>{
+    const unlocked = state.level>=BEREICHE[k].unlockLevel && state.ruf>=BEREICHE[k].unlockRuf;
+    const b = state.bereicheLevel[k];
+    if(!unlocked){
+      return `
+        <div class="bereich-row locked-row">
+          <span class="bereich-icon">🔒</span>
+          <div class="bereich-info"><div class="name">${BEREICHE[k].name}</div><div class="lvl">Freischaltung: Level ${BEREICHE[k].unlockLevel}${BEREICHE[k].unlockRuf?', Ruf '+BEREICHE[k].unlockRuf:''}</div></div>
+        </div>
+      `;
+    }
+    return `
+      <div class="bereich-row">
+        <span class="bereich-icon">${BEREICHE[k].icon}</span>
+        <div class="bereich-info"><div class="name">${BEREICHE[k].name}</div><div class="lvl">Fachwissen-Level ${b.level} · ${b.xp}/${b.xpNext} XP</div></div>
+        <div class="meter"><div style="width:${Math.round((b.xp/b.xpNext)*100)}%;background:var(--blue)"></div></div>
+      </div>
+    `;
+  }).join("");
+
+  return `
+    <div class="page-title"><div><h2>${esc(state.anwaltName)}</h2><p>${titleForLevel(state.level)} bei ${esc(state.kanzleiName)} · ${state.siegeCount} Prozesssiege</p></div></div>
+
+    <div class="section-label">Fähigkeiten</div>
+    <div class="card">${skillRows}</div>
+
+    <div class="section-label">Rechtsbereiche &amp; Fachwissen</div>
+    <div class="card">${bereichRows}</div>
+  `;
+}
+
+function pageVerlauf(){
+  return `
+    <div class="page-title"><div><h2>Verlauf</h2><p>Alle Ereignisse deiner Karriere.</p></div></div>
+    <div class="card" style="padding:6px 16px;">
+      ${state.history.length ? state.history.map(historyItem).join("") : `<div class="empty-state" style="border:none;">Noch keine Ereignisse.</div>`}
+    </div>
+  `;
+}
+
+/* =========================================================
+   GAME OVER
+   ========================================================= */
+function renderGameOver(){
+  const scr = document.getElementById("gameover-screen");
+  const isInsolvenz = state.gameOverReason==="insolvenz";
+  document.getElementById("go-icon").textContent = isInsolvenz ? "📉" : "🔨";
+  document.getElementById("go-title").textContent = isInsolvenz ? "Insolvenz" : "Verlust der Zulassung";
+  document.getElementById("go-text").textContent = isInsolvenz
+    ? "Deine Kanzlei ist zahlungsunfähig. Die Schulden sind zu hoch, um weiterzumachen."
+    : "Dein Ruf ist so tief gesunken, dass die Rechtsanwaltskammer ein Disziplinarverfahren eingeleitet und dir die Zulassung entzogen hat.";
+  document.getElementById("go-tage").textContent = state.tag;
+  document.getElementById("go-siege").textContent = state.siegeCount;
+  document.getElementById("go-level").textContent = state.level;
+  scr.classList.add("show");
+}
+</script>
+</body>
+</html>
