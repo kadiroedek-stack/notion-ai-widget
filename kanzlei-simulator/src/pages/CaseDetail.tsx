@@ -4,12 +4,19 @@ import {
   CalendarCheck, MessageCircle, Receipt, Clock, Landmark, User,
 } from 'lucide-react';
 import { useGameStore } from '../store/gameStore';
-import { Card, Badge, Button, ProgressBar } from '../components/common/ui';
+import { Card, Badge, Button, ProgressBar, Modal } from '../components/common/ui';
 import { formatMoney, formatDate } from '../engine/util';
 import type { CaseActionId } from '../engine/cases';
 import { MAX_ACTIONS_PER_DAY } from '../engine/cases';
 import { sourceLabel } from '../engine/clients';
+import { evaluateArgumentText, type ArgumentQuality } from '../engine/argument';
 import { CourtTrialModal } from '../components/court/CourtTrialModal';
+
+const QUALITY_TONE: Record<ArgumentQuality, 'bad' | 'info' | 'good'> = {
+  schwach: 'bad',
+  solide: 'info',
+  stark: 'good',
+};
 
 type Tab = 'uebersicht' | 'mandant' | 'dokumente' | 'fristen' | 'gericht' | 'strategie' | 'finanzen' | 'timeline';
 
@@ -38,7 +45,6 @@ const ACTIONS: { id: CaseActionId; label: string; icon: typeof FileText; cost: n
   { id: 'document', label: 'Dokument erstellen', icon: FileText, cost: 50 },
   { id: 'research', label: 'Recherche durchführen', icon: Search, cost: 30 },
   { id: 'contact_client', label: 'Mandant kontaktieren', icon: Phone, cost: 0 },
-  { id: 'offer_settlement', label: 'Vergleich anbieten', icon: Handshake, cost: 0 },
   { id: 'file_lawsuit', label: 'Klage einbringen', icon: Gavel, cost: 0 },
   { id: 'schriftsatz', label: 'Schriftsatz erstellen', icon: FileSignature, cost: 80 },
   { id: 'prepare_hearing', label: 'Gerichtstermin vorbereiten', icon: CalendarCheck, cost: 100 },
@@ -49,6 +55,7 @@ const ACTIONS: { id: CaseActionId; label: string; icon: typeof FileText; cost: n
 export function CaseDetail({ caseId, onBack }: { caseId: string; onBack: () => void }) {
   const game = useGameStore((s) => s.game)!;
   const performAction = useGameStore((s) => s.performAction);
+  const sendSettlementOffer = useGameStore((s) => s.sendSettlementOffer);
   const respondSettlement = useGameStore((s) => s.respondSettlement);
   const assignEmployee = useGameStore((s) => s.assignEmployee);
   const unassignEmployee = useGameStore((s) => s.unassignEmployee);
@@ -58,7 +65,11 @@ export function CaseDetail({ caseId, onBack }: { caseId: string; onBack: () => v
   const [tab, setTab] = useState<Tab>('uebersicht');
   const [message, setMessage] = useState<string | null>(null);
   const [counterAmount, setCounterAmount] = useState('');
+  const [counterMessage, setCounterMessage] = useState('');
   const [showTrial, setShowTrial] = useState(false);
+  const [showOfferForm, setShowOfferForm] = useState(false);
+  const [offerAmount, setOfferAmount] = useState('');
+  const [offerMessage, setOfferMessage] = useState('');
 
   const c = game.cases.find((x) => x.id === caseId);
   if (!c) {
@@ -109,32 +120,50 @@ export function CaseDetail({ caseId, onBack }: { caseId: string; onBack: () => v
 
       {openOffers.length > 0 && (
         <Card className="border-gold-600/50 p-4">
-          <p className="mb-3 font-medium text-gold-400">Offenes Vergleichsangebot</p>
+          <p className="mb-3 font-medium text-gold-400">Vergleichsverhandlung</p>
           {openOffers.map((offer) => (
             <div key={offer.id} className="mb-3 rounded-lg border border-navy-600 bg-navy-900/50 p-3 last:mb-0">
               <p className="text-sm text-ink-200">
                 {offer.from === 'gegner' ? 'Die Gegenseite bietet' : 'Eigenes Angebot an die Gegenseite'}: <strong>{formatMoney(offer.amount)}</strong>
               </p>
-              {offer.from === 'gegner' && (
-                <div className="mt-2.5 flex flex-wrap items-center gap-2">
-                  <Button variant="gold" onClick={() => respondSettlement(c.id, offer.id, 'annehmen')}>Annehmen</Button>
-                  <Button variant="secondary" onClick={() => respondSettlement(c.id, offer.id, 'ablehnen')}>Ablehnen</Button>
-                  <input
-                    value={counterAmount}
-                    onChange={(e) => setCounterAmount(e.target.value)}
-                    placeholder="Gegenangebot €"
-                    className="w-32 rounded-lg border border-navy-600 bg-navy-900 px-2.5 py-1.5 text-sm text-ink-100 outline-none focus:border-gold-500"
+              {offer.message && (
+                <p className="mt-1.5 rounded-md bg-navy-950/60 px-2.5 py-1.5 text-xs italic text-ink-400">„{offer.message}"</p>
+              )}
+              {offer.from === 'gegner' ? (
+                <div className="mt-2.5 space-y-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Button variant="gold" onClick={() => respondSettlement(c.id, offer.id, 'annehmen')}>Annehmen</Button>
+                    <Button variant="secondary" onClick={() => respondSettlement(c.id, offer.id, 'ablehnen')}>Ablehnen</Button>
+                    <input
+                      value={counterAmount}
+                      onChange={(e) => setCounterAmount(e.target.value)}
+                      placeholder="Gegenangebot €"
+                      className="w-32 rounded-lg border border-navy-600 bg-navy-900 px-2.5 py-1.5 text-sm text-ink-100 outline-none focus:border-gold-500"
+                    />
+                  </div>
+                  <textarea
+                    value={counterMessage}
+                    onChange={(e) => setCounterMessage(e.target.value)}
+                    placeholder="Begründung für dein Gegenangebot (überzeugt die Gegenseite eher)…"
+                    rows={2}
+                    className="w-full resize-none rounded-lg border border-navy-600 bg-navy-900 px-2.5 py-1.5 text-xs text-ink-100 outline-none placeholder:text-ink-500 focus:border-gold-500"
                   />
                   <Button
                     variant="ghost"
                     onClick={() => {
                       const amt = Number(counterAmount);
-                      if (amt > 0) { respondSettlement(c.id, offer.id, 'gegenangebot', amt); setCounterAmount(''); }
+                      if (amt > 0) {
+                        respondSettlement(c.id, offer.id, 'gegenangebot', amt, counterMessage);
+                        setCounterAmount('');
+                        setCounterMessage('');
+                      }
                     }}
                   >
                     Gegenangebot senden
                   </Button>
                 </div>
+              ) : (
+                <p className="mt-2 text-xs text-ink-500">Warte auf die Reaktion der Gegenseite…</p>
               )}
             </div>
           ))}
@@ -153,6 +182,11 @@ export function CaseDetail({ caseId, onBack }: { caseId: string; onBack: () => v
                 <a.icon size={15} /> {a.label}{a.cost > 0 ? ` (${a.cost}€)` : ''}
               </Button>
             ))}
+            {c.disputeValue > 0 && openOffers.length === 0 && (
+              <Button variant="secondary" className="justify-start" onClick={() => setShowOfferForm(true)}>
+                <Handshake size={15} /> Vergleich anbieten
+              </Button>
+            )}
           </div>
           {c.status === 'vor_gericht' && c.court && (
             <div className="mt-3 border-t border-navy-600 pt-3">
@@ -197,6 +231,82 @@ export function CaseDetail({ caseId, onBack }: { caseId: string; onBack: () => v
       {tab === 'timeline' && <TimelineTab c={c} />}
 
       {showTrial && <CourtTrialModal caseId={c.id} onClose={() => setShowTrial(false)} />}
+
+      {showOfferForm && (
+        <Modal
+          title="Vergleich anbieten"
+          onClose={() => { setShowOfferForm(false); setOfferAmount(''); setOfferMessage(''); }}
+        >
+          <SettlementOfferForm
+            disputeValue={c.disputeValue}
+            amount={offerAmount}
+            message={offerMessage}
+            onAmountChange={setOfferAmount}
+            onMessageChange={setOfferMessage}
+            onSubmit={() => {
+              const amt = Number(offerAmount);
+              if (!(amt > 0)) return;
+              const result = sendSettlementOffer(c.id, amt, offerMessage);
+              setMessage(result.message);
+              if (result.ok) {
+                setShowOfferForm(false);
+                setOfferAmount('');
+                setOfferMessage('');
+              }
+            }}
+            onCancel={() => { setShowOfferForm(false); setOfferAmount(''); setOfferMessage(''); }}
+          />
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+function SettlementOfferForm({
+  disputeValue, amount, message, onAmountChange, onMessageChange, onSubmit, onCancel,
+}: {
+  disputeValue: number;
+  amount: string;
+  message: string;
+  onAmountChange: (v: string) => void;
+  onMessageChange: (v: string) => void;
+  onSubmit: () => void;
+  onCancel: () => void;
+}) {
+  const evaluation = message.trim() ? evaluateArgumentText(message) : null;
+  const canSubmit = Number(amount) > 0;
+  return (
+    <div className="space-y-3">
+      <p className="text-sm text-ink-400">Streitwert: {formatMoney(disputeValue)}</p>
+      <div>
+        <label className="mb-1.5 block text-xs font-medium text-ink-400">Dein Vergleichsangebot (€)</label>
+        <input
+          type="number"
+          min={1}
+          value={amount}
+          onChange={(e) => onAmountChange(e.target.value)}
+          placeholder="z. B. 8000"
+          className="w-full rounded-lg border border-navy-600 bg-navy-900 px-3.5 py-2.5 text-sm text-ink-100 outline-none focus:border-gold-500"
+        />
+      </div>
+      <div>
+        <label className="mb-1.5 block text-xs font-medium text-ink-400">Deine Begründung an die Gegenseite</label>
+        <textarea
+          value={message}
+          onChange={(e) => onMessageChange(e.target.value)}
+          rows={4}
+          placeholder="z. B. „Angesichts der eindeutigen Beweislage und der Zeugenaussage schlage ich vor, den Rechtsstreit mit diesem fairen Betrag beizulegen …“"
+          className="w-full resize-none rounded-lg border border-navy-600 bg-navy-900 px-3.5 py-2.5 text-sm text-ink-100 outline-none placeholder:text-ink-500 focus:border-gold-500"
+        />
+        <div className="mt-1.5 flex items-center justify-between">
+          <p className="text-xs text-ink-500">Eine überzeugende, gut begründete Botschaft erhöht die Annahmechance.</p>
+          {evaluation && <Badge tone={QUALITY_TONE[evaluation.quality]}>{evaluation.quality}</Badge>}
+        </div>
+      </div>
+      <div className="flex gap-2 pt-1">
+        <Button variant="gold" className="flex-1" disabled={!canSubmit} onClick={onSubmit}>Angebot senden</Button>
+        <Button variant="ghost" onClick={onCancel}>Abbrechen</Button>
+      </div>
     </div>
   );
 }

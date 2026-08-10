@@ -97,6 +97,8 @@ export interface SettlementOffer {
   id: string;
   from: 'gegner' | 'mandant';
   amount: number;
+  message?: string;
+  persuasionScore?: number;
   createdOnDay: number;
   status: 'offen' | 'angenommen' | 'abgelehnt' | 'gegenangebot';
 }

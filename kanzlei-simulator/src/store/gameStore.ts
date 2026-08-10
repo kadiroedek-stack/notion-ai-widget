@@ -4,7 +4,9 @@ import { produce } from 'immer';
 import type { GameState, EmployeeRole, RateSettings } from '../types';
 import { createNewGame } from '../engine/newGame';
 import { advanceOneDay, advanceOneWeek, resolveRandomEvent } from '../engine/time';
-import { takeCase, rejectCase, performCaseAction, respondToSettlement, generateInvoice, type CaseActionId } from '../engine/cases';
+import {
+  takeCase, rejectCase, performCaseAction, respondToSettlement, sendSettlementOffer, generateInvoice, type CaseActionId,
+} from '../engine/cases';
 import { hireEmployee, fireEmployee, assignEmployeeToCase, unassignEmployeeFromCase } from '../engine/employees';
 import { upgradeFirm } from '../engine/firm';
 import { resolveTrial, type TrialResult } from '../engine/court';
@@ -21,7 +23,8 @@ interface GameStore {
   rejectCase: (caseId: string) => void;
   performAction: (caseId: string, action: CaseActionId) => ActionResult;
   createInvoice: (caseId: string) => ActionResult;
-  respondSettlement: (caseId: string, offerId: string, decision: 'annehmen' | 'ablehnen' | 'gegenangebot', counterAmount?: number) => void;
+  sendSettlementOffer: (caseId: string, amount: number, message: string) => ActionResult;
+  respondSettlement: (caseId: string, offerId: string, decision: 'annehmen' | 'ablehnen' | 'gegenangebot', counterAmount?: number, message?: string) => void;
   hireEmployee: (role: EmployeeRole) => ActionResult;
   fireEmployee: (employeeId: string) => void;
   assignEmployee: (caseId: string, employeeId: string) => void;
@@ -85,9 +88,18 @@ export const useGameStore = create<GameStore>()(
         return result;
       },
 
-      respondSettlement: (caseId, offerId, decision, counterAmount) => set(produce<GameStore>((s) => {
+      sendSettlementOffer: (caseId, amount, message) => {
+        let result: ActionResult = { ok: false, message: 'Kein aktives Spiel.' };
+        set(produce<GameStore>((s) => {
+          if (!s.game) return;
+          result = sendSettlementOffer(s.game, caseId, amount, message);
+        }));
+        return result;
+      },
+
+      respondSettlement: (caseId, offerId, decision, counterAmount, message) => set(produce<GameStore>((s) => {
         if (!s.game) return;
-        respondToSettlement(s.game, caseId, offerId, decision, counterAmount);
+        respondToSettlement(s.game, caseId, offerId, decision, counterAmount, message);
       })),
 
       hireEmployee: (role) => {

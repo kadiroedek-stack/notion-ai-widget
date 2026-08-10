@@ -4,6 +4,7 @@ import { pushTimeline } from './events';
 import { generateId, formatDate, clamp, randomInt, chance } from './util';
 import { courtForCase } from '../data/courts';
 import { firmLevelDef } from '../data/firmLevels';
+import { evaluateArgumentText } from './argument';
 
 export const MAX_ACTIONS_PER_DAY = 3;
 
@@ -15,8 +16,7 @@ export type CaseActionId =
   | 'schriftsatz'
   | 'prepare_hearing'
   | 'contact_opponent'
-  | 'invoice'
-  | 'offer_settlement';
+  | 'invoice';
 
 function findCase(state: GameState, caseId: string): Case {
   const c = state.cases.find((x) => x.id === caseId);
@@ -80,7 +80,6 @@ const ACTION_COST: Record<CaseActionId, number> = {
   prepare_hearing: 100,
   contact_opponent: 0,
   invoice: 0,
-  offer_settlement: 0,
 };
 
 function assignedResearchBonus(state: GameState, c: Case): number {
@@ -152,16 +151,6 @@ export function performCaseAction(state: GameState, caseId: string, action: Case
       } else {
         pushEvent(state, `Gegenseite in Fall "${c.title}" kontaktiert – bisher keine Reaktion.`, '💬', 'info', c.id);
       }
-      break;
-    }
-    case 'offer_settlement': {
-      if (c.disputeValue <= 0) {
-        return { ok: false, message: 'Für diesen Falltyp ist kein Vergleich möglich.' };
-      }
-      const amount = Math.round(c.disputeValue * randomFloatLocal(0.45, 0.7) / 10) * 10;
-      c.settlementOffers.push({ id: generateId('so'), from: 'mandant', amount, createdOnDay: state.day, status: 'offen' });
-      pushTimeline(c.timeline, state.day, `Vergleichsangebot über ${amount.toLocaleString('de-AT')} € unterbreitet.`);
-      pushEvent(state, `Vergleichsangebot für Fall "${c.title}" an die Gegenseite übermittelt.`, '🤝', 'info', c.id);
       break;
     }
     case 'prepare_hearing': {
@@ -241,12 +230,42 @@ export function generateInvoice(state: GameState, c: Case): { ok: boolean; messa
   return { ok: true, message: 'Rechnung gestellt.' };
 }
 
+export function sendSettlementOffer(
+  state: GameState,
+  caseId: string,
+  amount: number,
+  message: string,
+): { ok: boolean; message: string } {
+  const c = findCase(state, caseId);
+  if (c.status !== 'aktiv' && c.status !== 'vor_gericht') {
+    return { ok: false, message: 'Diese Aktion ist für den aktuellen Fallstatus nicht möglich.' };
+  }
+  if (c.disputeValue <= 0) {
+    return { ok: false, message: 'Für diesen Falltyp ist kein Vergleich möglich.' };
+  }
+  if (!Number.isFinite(amount) || amount <= 0) {
+    return { ok: false, message: 'Bitte einen gültigen Betrag angeben.' };
+  }
+  if (c.settlementOffers.some((o) => o.status === 'offen' && o.from === 'mandant')) {
+    return { ok: false, message: 'Es liegt bereits ein offenes Angebot bei der Gegenseite vor.' };
+  }
+  const evaluation = evaluateArgumentText(message);
+  c.settlementOffers.push({
+    id: generateId('so'), from: 'mandant', amount, message: message.trim() || undefined,
+    persuasionScore: evaluation.scoreDelta, createdOnDay: state.day, status: 'offen',
+  });
+  pushTimeline(c.timeline, state.day, `Vergleichsangebot über ${amount.toLocaleString('de-AT')} € unterbreitet.`);
+  pushEvent(state, `Vergleichsangebot über ${amount.toLocaleString('de-AT')} € für Fall "${c.title}" an die Gegenseite übermittelt.`, '🤝', 'info', c.id);
+  return { ok: true, message: 'Vergleichsangebot übermittelt. Die Gegenseite wird in den nächsten Tagen reagieren.' };
+}
+
 export function respondToSettlement(
   state: GameState,
   caseId: string,
   offerId: string,
   decision: 'annehmen' | 'ablehnen' | 'gegenangebot',
   counterAmount?: number,
+  message = '',
 ) {
   const c = findCase(state, caseId);
   const offer = c.settlementOffers.find((o) => o.id === offerId);
@@ -261,8 +280,10 @@ export function respondToSettlement(
     pushEvent(state, `Vergleichsangebot in Fall "${c.title}" abgelehnt.`, '🚫', 'info', c.id);
   } else if (decision === 'gegenangebot' && counterAmount) {
     offer.status = 'gegenangebot';
+    const evaluation = evaluateArgumentText(message);
     c.settlementOffers.push({
-      id: generateId('so'), from: 'mandant', amount: counterAmount, createdOnDay: state.day, status: 'offen',
+      id: generateId('so'), from: 'mandant', amount: counterAmount, message: message.trim() || undefined,
+      persuasionScore: evaluation.scoreDelta, createdOnDay: state.day, status: 'offen',
     });
     pushTimeline(c.timeline, state.day, `Gegenangebot über ${counterAmount.toLocaleString('de-AT')} € unterbreitet.`);
     pushEvent(state, `Gegenangebot über ${counterAmount.toLocaleString('de-AT')} € in Fall "${c.title}" übermittelt.`, '🤝', 'info', c.id);

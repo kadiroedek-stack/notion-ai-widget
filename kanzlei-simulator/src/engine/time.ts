@@ -7,6 +7,7 @@ import { applyDailyMoraleDrift } from './employees';
 import { checkAchievements } from './achievements';
 import { RANDOM_EVENT_TEMPLATES, toPendingEvent } from '../data/randomEvents';
 import { resolveTrial } from './court';
+import { resolveCase } from './cases';
 
 const FIXED_SOFTWARE_COST = 180;
 const FIXED_INSURANCE_COST = 120;
@@ -139,6 +140,39 @@ function processMonthlySettlement(state: GameState) {
   }
 }
 
+const SETTLEMENT_RESPONSE_DELAY_DAYS = 2;
+
+function processSettlementNegotiations(state: GameState) {
+  for (const c of state.cases) {
+    if (c.status !== 'aktiv' && c.status !== 'vor_gericht') continue;
+    const offer = c.settlementOffers.find((o) => o.status === 'offen' && o.from === 'mandant');
+    if (!offer) continue;
+    if (state.day - offer.createdOnDay < SETTLEMENT_RESPONSE_DELAY_DAYS) continue;
+
+    // Fairer Vergleichswert aus Sicht der Gegenseite: je höher unsere Erfolgschance, desto eher
+    // ist die Gegenseite bereit, mehr zu zahlen, um ein Gerichtsverfahren zu vermeiden.
+    const fairShare = clamp(c.successChance, 15, 85) / 100;
+    const fairValue = Math.max(1, c.disputeValue * fairShare);
+    const ratio = offer.amount / fairValue;
+    const persuasionBonus = (offer.persuasionScore ?? 8) / 40; // 0.1–0.5
+    const acceptChance = clamp(1.15 - ratio * 0.65 + persuasionBonus, 0.05, 0.9);
+
+    if (chance(acceptChance)) {
+      offer.status = 'angenommen';
+      resolveCase(state, c, 'vergleich', offer.amount);
+      pushEvent(state, `Die Gegenseite nimmt dein Vergleichsangebot über ${offer.amount.toLocaleString('de-AT')} € in Fall "${c.title}" an.`, '🤝', 'positive', c.id);
+    } else {
+      offer.status = 'abgelehnt';
+      pushEvent(state, `Die Gegenseite lehnt dein Vergleichsangebot über ${offer.amount.toLocaleString('de-AT')} € in Fall "${c.title}" ab.`, '🚫', 'negative', c.id);
+      if (chance(0.5)) {
+        const counterAmount = Math.round((fairValue * randomInt(60, 85)) / 100 / 10) * 10;
+        c.settlementOffers.push({ id: generateId('so'), from: 'gegner', amount: counterAmount, createdOnDay: state.day, status: 'offen' });
+        pushEvent(state, `Die Gegenseite unterbreitet im Gegenzug ein Angebot über ${counterAmount.toLocaleString('de-AT')} € in Fall "${c.title}".`, '🤝', 'decision', c.id);
+      }
+    }
+  }
+}
+
 function narrativeEventApplicable(state: GameState, id: string): boolean {
   if (id === 'employee_quits') return state.employees.some((e) => e.salary > 0);
   if (id === 'court_postponed') return state.cases.some((c) => c.status === 'vor_gericht' && c.court);
@@ -162,6 +196,7 @@ export function advanceOneDay(state: GameState) {
   processDeadlines(state);
   processNewLead(state);
   processInvoicePayments(state);
+  processSettlementNegotiations(state);
   applyDailyMoraleDrift(state);
   processMonthlySettlement(state);
   processRandomNarrativeEvent(state);
